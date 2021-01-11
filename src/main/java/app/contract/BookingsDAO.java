@@ -1,5 +1,7 @@
 package app.contract;
 
-public interface BookingsDAO {
+import app.domain.Booking;
 
+public interface BookingsDAO {
+    Booking getBookingByItsId(int idOfBooking);
 }
