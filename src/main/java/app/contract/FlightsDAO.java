@@ -1,27 +1,37 @@
 package app.contract;
 
 import app.domain.Flight;
+import app.exceptions.BookingOverflowException;
+import app.exceptions.FlightOverflowException;
+import app.exceptions.UsersOverflowException;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 public interface FlightsDAO {
 
-    public boolean createFlight(Flight flight);
+    void createFlight(Flight flight) throws BookingOverflowException, FlightOverflowException, UsersOverflowException, IOException;
 
-    public boolean deleteFlight(Flight flight);
+    boolean deleteFlight(Flight flight);
 
-    public List<Flight> getAllFlights();
+    HashMap<String, Flight> getAllFlights();
 
-    public List<Flight> findFlights(String destinationPlace, ZonedDateTime departureDateTime,
+    HashMap<String, Flight> findFlights(String destinationPlace, ZonedDateTime departureDateTime,
                                     int freeSeats);
 
-    public Flight getFlightById(int idOfFlight);
+    Flight getFlightById(int idOfFlight);
 
-    public List<Flight> getFlightsForNext24Hours();
+    Optional<HashMap<String,Flight>> getFlightsForNext24Hours();
 
-    public void applyReservation4Flight(int idOfFlight, int numbOfSeats);
+    void printFlightsToConsole(Optional<HashMap<String,Flight>> flightsOptional);
 
-    public void cancelReservation4Flight(int idOfFlight, int numbOfSeats);
+    void applyReservation4Flight(int idOfFlight, int numbOfSeats);
+
+    void cancelReservation4Flight(int idOfFlight, int numbOfSeats);
+
+    boolean flightsWereUploaded();
 
 }

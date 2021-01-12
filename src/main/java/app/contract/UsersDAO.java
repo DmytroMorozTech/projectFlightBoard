@@ -9,4 +9,6 @@ public interface UsersDAO {
     boolean registerNewUser(String login, String password);
 
     User getUserByLogin(String login);
+
+    boolean usersWereUploaded();
 }

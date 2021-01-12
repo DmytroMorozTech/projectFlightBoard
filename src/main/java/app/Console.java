@@ -3,8 +3,15 @@ package app;
 import app.controller.BookingsController;
 import app.controller.FlightsController;
 import app.controller.UsersController;
+import app.domain.Flight;
 import app.domain.User;
+import app.exceptions.BookingOverflowException;
+import app.exceptions.FlightOverflowException;
+import app.exceptions.UsersOverflowException;
+import app.service.flightsGenerator.FlightsGenerator;
+import app.service.loggerService.LoggerService;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -43,6 +50,7 @@ public class Console {
                     "6.\tСохранить внесенные изменения\n" +
                     "7.\tЗавершить сессию\n" +
                     "8.\tЗавершить работу программы\n" +
+                    "9.\tСгенерировать рейсы случайным образом\n" +
                     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 
     public Console(FlightsController fc, BookingsController bc, UsersController uc) {
@@ -51,18 +59,29 @@ public class Console {
         this.usersController = uc;
     }
 
-    public static void main(String[] args) throws Exception {
-        addCommands4LoginMenu();
-        addCommands4MainMenu();
+    public static void main(String[] args) throws Exception, FlightOverflowException, BookingOverflowException, UsersOverflowException {
+        if (!usersController.usersWereUploaded())
+            initialization();
+
         loginAndRegistration();
 
         while (userIsAuthorized) {
+            if (!flightsController.flightsWereUploaded())
+                flightsController.loadData();
+//            bookingsController.loadData();  // это должен прописать Сергей
+
             System.out.println(mainMenuCommandsStr);
             inputCommand = readCommand("main");
             executeCommandByName("main", inputCommand);
         }
 
         main(null);
+    }
+
+    private static void initialization() throws BookingOverflowException, FlightOverflowException, UsersOverflowException, IOException {
+        addCommands4LoginMenu();
+        addCommands4MainMenu();
+        usersController.loadData();
     }
 
     public static void executeCommandByName(String section, String commandName) throws Exception {
@@ -80,7 +99,8 @@ public class Console {
 
         mainMenuCommands.put("1", () -> {
             System.out.println("<<< Вы выбрали команду №1 - ОТОБРАЗИТЬ ОНЛАЙН-ТАБЛО >>>");
-
+            Optional<HashMap<String, Flight>> flightsForNext24Hours = flightsController.getFlightsForNext24Hours();
+            flightsController.printFlightsToConsole(flightsForNext24Hours);
 //            flightsController.getFlightsForNext24Hours()
             //  Здесь мы через flightsController должны вызвать метод, который отобразит на
             //  экране информацию про все рейсы из Киева на ближайшие 24 часа.
@@ -153,15 +173,34 @@ public class Console {
         });
 
         mainMenuCommands.put("7", () -> {
-            System.out.println("<<< Вы выбрали команду №7 - ЗАВЕРШИТЬ СЕССИЮ >>>");
+
+            //            System.out.println("<<< Вы выбрали команду №7 - ЗАВЕРШИТЬ СЕССИЮ >>>");
             logOut();
 //          Происходит Logout пользователя и он попадает в loginMenu.
             return null;
         });
 
         mainMenuCommands.put("8", () -> {
-            System.out.println("<<< Вы выбрали команду №8 - ЗАВЕРШИТЬ РАБОТУ ПРИЛОЖЕНИЯ >>>");
+            LoggerService.info("Завершение работы приложения.");
+//            System.out.println("<<< Вы выбрали команду №8 - ЗАВЕРШИТЬ РАБОТУ ПРИЛОЖЕНИЯ >>>");
             System.exit(1);
+            return null;
+        });
+
+        mainMenuCommands.put("9", () -> {
+            System.out.println("<<< Вы выбрали команду №9 - Сгенерировать рейсы случайным образом >>>");
+            try {
+                generateNewFlights();
+            }
+            catch (BookingOverflowException | FlightOverflowException | UsersOverflowException e) {
+                e.printStackTrace();
+            }
+
+//        {
+//            System.out.println("Рейс был успешно создан");
+//        } else {
+//            System.out.println("Возникла ОШИБКА при создании рейса");
+//        }
             return null;
         });
     }
@@ -182,7 +221,7 @@ public class Console {
         });
 
         loginMenuCommands.put("3", () -> {
-            System.out.println("<<< Вы выбрали команду №3 - ЗАВЕРШИТЬ РАБОТУ ПРИЛОЖЕНИЯ >>>");
+            LoggerService.info("Завершение работы приложения.");
             System.exit(1);
             return null;
         });
@@ -199,11 +238,12 @@ public class Console {
     private static void logIn() {
         System.out.println("Пожалуйста, введите Ваши данные для входа в учетную запись");
         String login = readString("ЛОГИН: ");
-        String password = readString("ПАРОЛЬ: ");
+        String password = readPassword("ПАРОЛЬ: ");
         boolean successfulLogin = usersController.logIn(login, password);
         if (successfulLogin) {
             activeUser = usersController.getUserByLogin(login);
             userIsAuthorized = true;
+            System.out.printf("%s, Вы успешно вошли в систему.", activeUser.getLogin());
         } else {
             System.out.println("Вы ввели неправильный логин или пароль! Повторите попытку.");
         }
@@ -212,9 +252,11 @@ public class Console {
     private static void registration() {
         System.out.println("Пожалуйста, введите Ваши данные для регистрации новой учетной записи");
         String login = readString("ЛОГИН: ");
-        String password = readString("ПАРОЛЬ: ");
+        String password = readPassword("ПАРОЛЬ: ");
         boolean successfulRegistration = usersController.registerNewUser(login, password);
         if (successfulRegistration) {
+            LoggerService.info("Регистрация нового пользователя прошла успешно.");
+
             System.out.println("Регистрация прошла успешно.");
             System.out.println("Теперь Вам нужно войти в систему, используя ЛОГИН и ПАРОЛЬ, " +
                                        "указанные при регистрации.");
@@ -224,8 +266,19 @@ public class Console {
     }
 
     private static void logOut() {
+        LoggerService.info("Завершение рабочей сессии(User's logout).");
         activeUser = null;
         userIsAuthorized = false;
     }
+
+    private static int generateRandomInt(int minValue, int maxValue) {
+        return (int) (Math.random() * (maxValue - minValue + 1) + minValue);
+    }
+
+    private static void generateNewFlights() throws BookingOverflowException, FlightOverflowException, UsersOverflowException, IOException {
+        FlightsGenerator.generateFlights(500);
+        FlightsGenerator.saveDataToFile();
+    }
+
 
 }

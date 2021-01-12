@@ -1,5 +1,9 @@
 package app.domain;
 
-public class Booking {
+import java.io.Serializable;
 
+public class Booking implements Serializable {
+
+    public Booking() {
+    }
 }
