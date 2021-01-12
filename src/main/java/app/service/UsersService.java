@@ -1,14 +1,18 @@
 package app.service;
 
+import app.contract.CanWorkWithFileSystem;
+import app.contract.UsersDAO;
 import app.domain.User;
+import app.exceptions.FlightOverflowException;
+import app.exceptions.UsersOverflowException;
 import app.repos.CollectionUsersDAO;
 
-import java.util.Objects;
+import java.io.IOException;
 
-public class UsersService {
+public class UsersService implements UsersDAO, CanWorkWithFileSystem {
     private CollectionUsersDAO usersDAO;
 
-    public UsersService() {
+    public UsersService() throws UsersOverflowException {
         this.usersDAO = new CollectionUsersDAO();
     }
 
@@ -22,5 +26,20 @@ public class UsersService {
 
     public User getUserByLogin(String login) {
         return usersDAO.getUserByLogin(login);
+    }
+
+    @Override
+    public void loadData() throws IOException, UsersOverflowException {
+        usersDAO.loadData();
+    }
+
+    @Override
+    public boolean saveDataToFile() throws IOException, UsersOverflowException, FlightOverflowException {
+        return usersDAO.saveDataToFile();
+    }
+
+    @Override
+    public boolean usersWereUploaded() {
+        return usersDAO.usersWereUploaded();
     }
 }

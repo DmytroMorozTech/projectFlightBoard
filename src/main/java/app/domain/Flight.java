@@ -9,12 +9,12 @@ import java.util.TimeZone;
 public class Flight implements Serializable {
     private String departurePlace; // in our case it is always "Kyiv"
     private String destinationPlace;
-    private int idOfFlight;
+    private String idOfFlight;
     private long departureTime;
     private long arrivalTime;
     private int numberOfFreeSeats;
 
-    public Flight(String departurePlace, String destinationPlace, int idOfFlight,
+    public Flight(String departurePlace, String destinationPlace, String idOfFlight,
                   long departureTime, long arrivalTime, int numberOfFreeSeats) {
         this.departurePlace = departurePlace;
         this.destinationPlace = destinationPlace;
@@ -51,7 +51,7 @@ public class Flight implements Serializable {
         return destinationPlace;
     }
 
-    public int getIdOfFlight() {
+    public String getIdOfFlight() {
         return idOfFlight;
     }
 
@@ -86,13 +86,14 @@ public class Flight implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("Flight{departurePlace='%s', destinationPlace='%s', idOfFlight=%d, " +
-                                     "departureTime=%s," +
-                                     " arrivalTime=%s, numberOfFreeSeats=%d}",
+        return String.format("Flight { departurePlace='%s'  |  destinationPlace='%s'\t|  " +
+                                     "idOfFlight=%s  |  " + "departureTime=%s  |  " +
+                                     "arrivalTime=%s  |  numberOfFreeSeats=%d\t}",
                              departurePlace, destinationPlace, idOfFlight,
                              getPrettyFormattedDate(departureTime),
                              getPrettyFormattedDate(arrivalTime), numberOfFreeSeats);
     }
+
 
     private static String getPrettyFormattedDate(long timeInUnixMillis) {
         LocalDateTime dateTime = LocalDateTime.ofInstant(
@@ -109,14 +110,35 @@ public class Flight implements Serializable {
     }
 
     public String prettyFormat() {
-        return "__________________________________________\n" +
-                "Departure from: " + departurePlace + "\n" +
-                "Destination: " + destinationPlace + "\n" +
-                "Departure time: " + getPrettyFormattedDate(departureTime) + "\n" +
-                "Arrival time: " + getPrettyFormattedDate(arrivalTime) + "\n" +
-                "Number of free seats: " + numberOfFreeSeats + "\n" +
-                "ID of flight: " + idOfFlight + "\n" +
-                "__________________________________________\n";
+//        return "__________________________________________\n" +
+//                "Departure from: " + departurePlace + "\n" +
+//                "Destination: " + destinationPlace + "\n" +
+//                "Departure time: " + getPrettyFormattedDate(departureTime) + "\n" +
+//                "Arrival time: " + getPrettyFormattedDate(arrivalTime) + "\n" +
+//                "Number of free seats: " + numberOfFreeSeats + "\n" +
+//                "ID of flight: " + idOfFlight + "\n" +
+//                "__________________________________________\n";
+        String spaces = generateSpaces(destinationPlace);
+
+        return
+                "Номер рейса: " + idOfFlight + "  |  " +
+                        "Пункт назначения: " + destinationPlace + spaces +
+                        "|  " +
+                        "Время вылета: " + getPrettyFormattedDate(departureTime) + "  |  " +
+                        "Время прибытия: " + getPrettyFormattedDate(arrivalTime) + "  |  " +
+                        "Количество свободных мест: " + formatFreeSeats(numberOfFreeSeats) + "  |";
+    }
+
+    private static String generateSpaces(String cityName) {
+        int numbOfSpaces = 18 - cityName.length();
+        String spaces = "";
+        for (int i = 1; i < numbOfSpaces; i++) spaces += " ";
+        return spaces;
+    }
+
+    private static String formatFreeSeats(int numbOfFreeSeats) {
+        if (numbOfFreeSeats < 10) return "0" + String.valueOf(numbOfFreeSeats);
+        return String.valueOf(numbOfFreeSeats);
     }
 
 }

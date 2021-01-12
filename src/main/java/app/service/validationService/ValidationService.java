@@ -16,7 +16,7 @@ public class ValidationService {
     public static String readCommand(String section) {
         String input;
         List<String> allowedCommands = new ArrayList<>(
-                Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8")
+                Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9")
         );
         if (section.equals("loginMenu")) {
             allowedCommands = new ArrayList<>(
@@ -80,6 +80,21 @@ public class ValidationService {
         return formattedInput;
     }
 
+    public static String readPassword(String prompt) {
+        String password;
+
+        while (true) {
+            System.out.println(prompt);
+            password = scanner.nextLine();
+
+            if (password.length() < 5 || password.length() > 15) {
+                System.out.println("Пожалуйста, введите пароль длинной от 5 до 15 символов");
+                continue;
+            } else if (password.length() >= 5 || password.length() <= 15) break;
+        }
+        return password;
+    }
+
     private static long strToDateTimeInMillis(String dateAsString) {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy-HH:mm");
         LocalDateTime dateTime = LocalDateTime.parse(dateAsString, dtf);
@@ -107,4 +122,6 @@ public class ValidationService {
             return strToDateTimeInMillis(input);
         }
     }
+
+
 }
