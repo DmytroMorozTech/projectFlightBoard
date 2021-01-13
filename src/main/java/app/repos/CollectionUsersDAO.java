@@ -2,9 +2,7 @@ package app.repos;
 
 import app.contract.CanWorkWithFileSystem;
 import app.contract.UsersDAO;
-import app.domain.Flight;
 import app.domain.User;
-import app.exceptions.BookingOverflowException;
 import app.exceptions.FlightOverflowException;
 import app.exceptions.UsersOverflowException;
 import app.service.fileSystemService.FileSystemService;
@@ -18,7 +16,7 @@ public final class CollectionUsersDAO implements UsersDAO, CanWorkWithFileSystem
     private HashMap<String, User> users;
     private final String nameOfFile = "users.bin";
 
-    public CollectionUsersDAO() throws UsersOverflowException {
+    public CollectionUsersDAO() {
         this.users = new HashMap<>();
     }
 
@@ -32,11 +30,11 @@ public final class CollectionUsersDAO implements UsersDAO, CanWorkWithFileSystem
     }
 
     @Override
-    public boolean registerNewUser(String login, String password) {
+    public boolean registerNewUser(String login, String password, String name, String surname) {
         if (users.containsKey(login)) {
             return false;
         } else {
-            users.put(login, new User(login, password));
+            users.put(login, new User(login, password, name, surname));
             try {
                 saveDataToFile();
             }
@@ -51,7 +49,6 @@ public final class CollectionUsersDAO implements UsersDAO, CanWorkWithFileSystem
     public User getUserByLogin(String login) {
         return users.get(login);
     }
-
 
     @Override
     public void loadData() throws UsersOverflowException {
@@ -88,5 +85,10 @@ public final class CollectionUsersDAO implements UsersDAO, CanWorkWithFileSystem
     @Override
     public boolean usersWereUploaded() {
         return users.size() != 0;
+    }
+
+    @Override
+    public boolean getLoginIsFreeStatus(String login) {
+        return !users.containsKey(login);
     }
 }

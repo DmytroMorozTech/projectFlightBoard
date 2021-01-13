@@ -6,6 +6,7 @@ import app.exceptions.FlightOverflowException;
 import app.exceptions.UsersOverflowException;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -19,10 +20,11 @@ public interface FlightsDAO {
 
     HashMap<String, Flight> getAllFlights();
 
-    HashMap<String, Flight> findFlights(String destinationPlace, ZonedDateTime departureDateTime,
-                                    int freeSeats);
+    Optional<HashMap<String, Flight>> getFilteredFlights(String destinationPlace,
+                                                LocalDateTime departureDateTime,
+                                               int freeSeats);
 
-    Flight getFlightById(int idOfFlight);
+    Flight getFlightById(String idOfFlight);
 
     Optional<HashMap<String,Flight>> getFlightsForNext24Hours();
 

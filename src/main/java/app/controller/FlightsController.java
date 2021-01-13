@@ -9,9 +9,10 @@ import app.exceptions.UsersOverflowException;
 import app.service.FlightsService;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class FlightsController implements FlightsDAO, CanWorkWithFileSystem {
     private FlightsService flightsService;
@@ -46,13 +47,15 @@ public class FlightsController implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public HashMap<String, Flight> findFlights(String destinationPlace, ZonedDateTime departureDateTime, int freeSeats) {
-        return null;
+    public Optional<HashMap<String, Flight>> getFilteredFlights(String destinationPlace,
+                                                                LocalDateTime departureDateTime,
+                                                                int freeSeats) {
+        return flightsService.getFilteredFlights(destinationPlace, departureDateTime, freeSeats);
     }
 
     @Override
-    public Flight getFlightById(int idOfFlight) {
-        return null;
+    public Flight getFlightById(String idOfFlight) {
+        return flightsService.getFlightById(idOfFlight);
     }
 
     @Override
@@ -79,5 +82,24 @@ public class FlightsController implements FlightsDAO, CanWorkWithFileSystem {
     @Override
     public boolean flightsWereUploaded() {
         return flightsService.flightsWereUploaded();
+    }
+
+    public List<Flight> convertHashMapToList(HashMap<String, Flight> hashMap) {
+        Collection<Flight> flightsCollection = hashMap.values();
+        List<Flight> filteredFlights = flightsCollection
+                .stream()
+                .sorted(Comparator.comparingLong(Flight::getDepartureTime))
+                .collect(Collectors.toList());
+
+        return new ArrayList<Flight>(filteredFlights);
+    }
+
+    public void printIndexedList(List<Flight> flights) {
+        int counter = 1;
+        for (Flight f : flights) {
+            String outputStr = counter + ". " + f.prettyFormat();
+            System.out.println(outputStr);
+            counter++;
+        }
     }
 }

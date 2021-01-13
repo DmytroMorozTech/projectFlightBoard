@@ -1,4 +1,144 @@
 package app.repos;
 
-public class CollectionBookingsDAO {
+import app.contract.BookingsDAO;
+import app.contract.CanWorkWithFileSystem;
+import app.domain.Booking;
+import app.domain.Flight;
+import app.domain.Passenger;
+import app.domain.User;
+import app.exceptions.BookingOverflowException;
+import app.exceptions.FlightOverflowException;
+import app.exceptions.UsersOverflowException;
+import app.service.fileSystemService.FileSystemService;
+import app.service.loggerService.LoggerService;
+
+import static app.service.validationService.ValidationService.*;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem {
+    private HashMap<String, Booking> bookings = new HashMap<>();
+    private final String nameOfFile = "bookings.bin";
+
+    @Override
+    public Booking getBookingByItsId(String idOfBooking) {
+        return bookings.get(idOfBooking);
+    }
+
+    @Override
+    public Optional<HashMap<String, Booking>> getAllUserBookings(String userLogin, String name,
+                                                                 String surname) {
+        Passenger userAsPassenger = new Passenger(name, surname);
+        // нам нужен этот объект, чтобы перепроверить, в каком рейсе наш пользователь, который
+        // осуществлял бронирование рейса, мог выступать в роли пассажира.
+
+        Map<String, Booking> filteredMap =
+                bookings.entrySet().stream()   //Stream<Map.Entry<String,Booking>>
+                        .filter(b -> b.getValue().getUserLogin().equals(userLogin)
+                                | b.getValue().getPassengerList().contains(userAsPassenger))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        HashMap<String, Booking> filteredHashMap = (HashMap<String, Booking>) filteredMap;
+
+        return Optional.of(filteredHashMap);
+    }
+
+    @Override
+    public boolean deleteBookingByItsId(String idOfBooking) {
+        bookings.remove(idOfBooking);
+        boolean bookingWasDeleted = !bookings.containsKey(idOfBooking);
+        if (bookingWasDeleted)
+            LoggerService.info("Выбранная пользователем бронь билетов была удалена.");
+        else if (!bookingWasDeleted)
+            LoggerService.error("Не удалось найти бронь билетов с указанным ID брони. Ошибка " +
+                                        "удаления брони.");
+        return bookingWasDeleted;
+    }
+
+    @Override
+    public boolean deleteBookingByObj(Booking booking) {
+        String idOfBooking = booking.getIdOfBooking();
+        bookings.remove(idOfBooking);
+        return bookings.containsKey(idOfBooking);
+    }
+    // перепроверить позже, нужен ли нам этот метод
+
+    @Override
+    public void createBooking(Booking booking) {
+        bookings.put(booking.getIdOfBooking(), booking);
+
+        LoggerService.info("Был вызван метод createBooking(Booking booking). Рейс был " +
+                                   "забронирован.");
+    }
+
+    @Override
+    public List<Passenger> getPassengersDataFromUser(int numbOfPassengers) {
+        List<Passenger> passengersList = new ArrayList<>();
+        Passenger newPassenger;
+
+        for (int i = 1; i <= numbOfPassengers; i++) {
+            System.out.printf("Пожалуйста, введите данные о пассажире №%d :\n", i);
+            String passengerName = readString("Имя: ");
+            String passengerSurname = readString("Фамилия: ");
+            newPassenger = new Passenger(passengerName, passengerSurname);
+            passengersList.add(newPassenger);
+        }
+        return passengersList;
+    }
+
+    @Override
+    public void printBookingsToConsole(Optional<HashMap<String, Booking>> bookingsOptional) {
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy-HH:mm");
+        String formattedDateTime = dtf.format(currentDateTime);
+
+        System.out.println("<<< АЭРОПОРТ, ГОРОД КИЕВ >>>");
+        System.out.println(formattedDateTime);
+        System.out.println("*************************************************************");
+
+        if (bookingsOptional.isEmpty())
+            System.out.println("По Вашему запросу не было найдено забронированных рейсов.");
+        else if (bookingsOptional.isPresent()) {
+            System.out.println("СПИСОК ЗАБРОНИРОВАННЫХ РЕЙСОВ:");
+            Collection<Booking> foundBookings = bookingsOptional.get().values();
+            for (Booking b : foundBookings)
+                System.out.println(b.prettyFormat());
+        }
+    }
+
+    @Override
+    public void loadData() throws BookingOverflowException {
+        LoggerService.info("Загрузка файла " + nameOfFile + " с жесткого диска.");
+
+        try {
+            FileSystemService fs = new FileSystemService();
+            Object dataFromFS = fs.getDataFromFile(nameOfFile);
+            if (dataFromFS instanceof HashMap) {
+                bookings = (HashMap<String, Booking>) dataFromFS;
+            }
+        }
+        catch (IOException | ClassNotFoundException e) {
+            throw new BookingOverflowException("Возникла ОШИБКА при чтении файла " + nameOfFile +
+                                                       " с жесткого диска.");
+        }
+    }
+
+    @Override
+    public boolean saveDataToFile() throws IOException, BookingOverflowException, FlightOverflowException, UsersOverflowException {
+        LoggerService.info("Сохранение данных на жесткий диск в файл " + nameOfFile);
+
+        try {
+            FileSystemService fs = new FileSystemService();
+            fs.saveDataToFile(nameOfFile, bookings);
+            return true;
+        }
+        catch (IOException e) {
+            throw new BookingOverflowException("Возникла ОШИБКА при сохранении файла " + nameOfFile +
+                                                       " на жесткий диск компьютера.");
+        }
+    }
+
 }

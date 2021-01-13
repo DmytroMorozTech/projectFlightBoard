@@ -9,7 +9,7 @@ import app.exceptions.UsersOverflowException;
 import app.repos.CollectionFlightsDAO;
 
 import java.io.IOException;
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -42,14 +42,14 @@ public class FlightsService implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public HashMap<String, Flight> findFlights(String destinationPlace,
-                                               ZonedDateTime departureDateTime, int freeSeats) {
-        return null;
+    public Optional<HashMap<String, Flight>> getFilteredFlights(String destinationPlace,
+                                                                LocalDateTime departureDateTime, int freeSeats) {
+        return flightsDAO.getFilteredFlights(destinationPlace, departureDateTime, freeSeats);
     }
 
     @Override
-    public Flight getFlightById(int idOfFlight) {
-        return null;
+    public Flight getFlightById(String idOfFlight) {
+        return flightsDAO.getFlightById(idOfFlight);
     }
 
     @Override

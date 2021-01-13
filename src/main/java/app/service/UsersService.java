@@ -20,8 +20,8 @@ public class UsersService implements UsersDAO, CanWorkWithFileSystem {
         return usersDAO.logIn(login, password);
     }
 
-    public boolean registerNewUser(String login, String password) {
-        return usersDAO.registerNewUser(login, password);
+    public boolean registerNewUser(String login, String password, String name, String surname) {
+        return usersDAO.registerNewUser(login, password, name, surname);
     }
 
     public User getUserByLogin(String login) {
@@ -41,5 +41,10 @@ public class UsersService implements UsersDAO, CanWorkWithFileSystem {
     @Override
     public boolean usersWereUploaded() {
         return usersDAO.usersWereUploaded();
+    }
+
+    @Override
+    public boolean getLoginIsFreeStatus(String login) {
+        return usersDAO.getLoginIsFreeStatus(login);
     }
 }

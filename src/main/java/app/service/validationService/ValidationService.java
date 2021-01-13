@@ -22,6 +22,10 @@ public class ValidationService {
             allowedCommands = new ArrayList<>(
                     Arrays.asList("1", "2", "3"));
         }
+        if (section.equals("bookingMenu")) {
+            allowedCommands = new ArrayList<>(
+                    Arrays.asList("1", "2"));
+        }
 
         while (true) {
             System.out.println("\nВведите комманду: ");
@@ -42,12 +46,12 @@ public class ValidationService {
                 value = Integer.valueOf(input);
             }
             catch (NumberFormatException e) {
-                System.out.println("You've entered the wrong data format!");
+                System.out.println("Вы ввели неправильный формат данных.");
                 value = Integer.MIN_VALUE;
             }
             if (value >= min && value <= max)
                 break;
-            System.out.println("Enter an integer value between " + min + " and " + max);
+            System.out.println("Пожалуйста введите целое число в диапазоне от " + min + " до " + max);
         }
         return value;
     }
@@ -93,6 +97,25 @@ public class ValidationService {
             } else if (password.length() >= 5 || password.length() <= 15) break;
         }
         return password;
+    }
+
+    public static String readFlightId(String prompt) {
+        String input;
+
+        Pattern pattern = Pattern.compile("^[A-Z]{2}\\d{3}[A-Z]$");
+
+        while (true) {
+            System.out.println(prompt);
+            input = scanner.nextLine();
+
+            boolean enteredIdIsCorrect = pattern.matcher(input).find();
+            if (enteredIdIsCorrect) break;
+            else {
+                System.out.println("Вы ввели неправильный номер рейса. Образец: FL973F.");
+                System.out.println("Пожалуйста, введите правильный номер рейса согласно образцу.");
+            }
+        }
+        return input;
     }
 
     private static long strToDateTimeInMillis(String dateAsString) {

@@ -3,7 +3,9 @@ package app;
 import app.controller.BookingsController;
 import app.controller.FlightsController;
 import app.controller.UsersController;
+import app.domain.Booking;
 import app.domain.Flight;
+import app.domain.Passenger;
 import app.domain.User;
 import app.exceptions.BookingOverflowException;
 import app.exceptions.FlightOverflowException;
@@ -12,6 +14,8 @@ import app.service.flightsGenerator.FlightsGenerator;
 import app.service.loggerService.LoggerService;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -20,9 +24,11 @@ import static app.service.validationService.ValidationService.*;
 public class Console {
     private static User activeUser;
     private static boolean userIsAuthorized = false;
+    private static List<Flight> flightsConsideredAtTheMoment;
 
     private static HashMap<String, Callable<Void>> mainMenuCommands;
     private static HashMap<String, Callable<Void>> loginMenuCommands;
+    private static HashMap<String, Callable<Void>> bookingMenuCommands;
 
     private static FlightsController flightsController;
     private static BookingsController bookingsController;
@@ -54,9 +60,10 @@ public class Console {
                     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 
     public Console(FlightsController fc, BookingsController bc, UsersController uc) {
-        this.flightsController = fc;
-        this.bookingsController = bc;
-        this.usersController = uc;
+        flightsController = fc;
+        bookingsController = bc;
+        usersController = uc;
+
     }
 
     public static void main(String[] args) throws Exception, FlightOverflowException, BookingOverflowException, UsersOverflowException {
@@ -66,9 +73,13 @@ public class Console {
         loginAndRegistration();
 
         while (userIsAuthorized) {
-            if (!flightsController.flightsWereUploaded())
+            if (!flightsController.flightsWereUploaded()) {
                 flightsController.loadData();
-//            bookingsController.loadData();  // это должен прописать Сергей
+                bookingsController.loadData();
+            }
+
+            // если пользователь был успешно авторизован, а список рейсов все еще не загружен
+            // в систему, то загружаем эти данные с диска. Также загружаем данные по бронированиям.
 
             System.out.println(mainMenuCommandsStr);
             inputCommand = readCommand("main");
@@ -81,6 +92,7 @@ public class Console {
     private static void initialization() throws BookingOverflowException, FlightOverflowException, UsersOverflowException, IOException {
         addCommands4LoginMenu();
         addCommands4MainMenu();
+        addCommands4BookingMenu();
         usersController.loadData();
     }
 
@@ -90,6 +102,9 @@ public class Console {
             commandToBeExecuted.call();
         } else if (section.equals("loginMenu")) {
             Callable<Void> commandToBeExecuted = loginMenuCommands.get(commandName);
+            commandToBeExecuted.call();
+        } else if (section.equals("bookingMenu")) {
+            Callable<Void> commandToBeExecuted = bookingMenuCommands.get(commandName);
             commandToBeExecuted.call();
         }
     }
@@ -101,50 +116,52 @@ public class Console {
             System.out.println("<<< Вы выбрали команду №1 - ОТОБРАЗИТЬ ОНЛАЙН-ТАБЛО >>>");
             Optional<HashMap<String, Flight>> flightsForNext24Hours = flightsController.getFlightsForNext24Hours();
             flightsController.printFlightsToConsole(flightsForNext24Hours);
-//            flightsController.getFlightsForNext24Hours()
-            //  Здесь мы через flightsController должны вызвать метод, который отобразит на
-            //  экране информацию про все рейсы из Киева на ближайшие 24 часа.
             return null;
         });
 
         mainMenuCommands.put("2", () -> {
             System.out.println("<<< Вы выбрали команду №2 - ПОСМОТРЕТЬ ИНФОРМАЦИЮ О РЕЙСЕ >>>");
-
-//            - Здесь мы должны вызвать метод flightsController.getFlightById()
-//            Пользователю предлагается ввести ID рейса. Далее по этому рейсу выводится вся информация:
-//            дата,    время,    место назначения,    количество свободных мест.
-//            - После этого снова отображается главное меню.
+            String idOfFlight = readFlightId("Введите номер интересующего Вас рейса (его ID):");
+            Flight f = flightsController.getFlightById(idOfFlight);
+            System.out.println(f.prettyFormat());
             return null;
         });
 
         mainMenuCommands.put("3", () -> {
             System.out.println("<<< Вы выбрали команду №3 - ПОИСК И БРОНИРОВАНИЕ РЕЙСА >>>");
+            Optional<HashMap<String, Flight>> foundFlights = findFlights();
+            if (foundFlights.isEmpty()) {
+                System.out.println("По заданным критериям НЕ БЫЛО НАЙДЕНО РЕЙСОВ.");
+                return null;
+            }
+            List<Flight> flights = flightsController.convertHashMapToList(foundFlights.get());
+            flightsController.printIndexedList(flights);
+//          Все найденные рейсы здесь выводятся на экран.
+            flightsConsideredAtTheMoment = flights;
 
-            String destination = readString("Введите пункт Вашего назначения(город): ");
-            long dateAndTime = readDate("Введите дату и время желаемого вылета в " +
-                                                "формате в формате dd/MM/yyyy-HH:mm:\n");
-            int numbOfRequestedSeats = readNumber("Введите количество посадочных " +
-                                                          "мест, которые Вы хотели бы " +
-                                                          "забронировать: ", 1, 6);
-//            - Здесь мы должны вызвать flightsController.findFlights() , чтобы найти все рейсы,
-//            которые отвечают критериям, заданным пользователем.
-//            - Все найденные рейсы должны быть выведены на экран.
-//            - После этого пользователь может выбрать один из найденных рейсов, указав его
-//            порядковый номер, либо вернуться в главное меню (выбрав пункт 0).
+            String bookingMenuCommandsStr =
+                    "\n\n" +
+                            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" +
+                            "Дальнейшие действия:\n" +
+                            "1.\tВыбрать рейс для бронирования.\n" +
+                            "2.\tВернуться в предыдущее меню.\n" +
+                            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+            System.out.println(bookingMenuCommandsStr);
 
-//            - Если пользователь решает забронировать рейс, ему необходимо ввести данные (имя и
-//            фамилия) для того количества пассажиров, которое было указано при поиске. Для этого
-//            мы будем обращаться к bookingsController.
+            inputCommand = readCommand("bookingMenu");
+            executeCommandByName("bookingMenu", inputCommand);
 
+//          Если пользователь решает забронировать рейс, ему необходимо ввести данные (имя и
+//          фамилия) для того количества пассажиров, которое было указано при поиске. Для этого
+//          мы будем обращаться к bookingsController.
 
             return null;
         });
 
         mainMenuCommands.put("4", () -> {
             System.out.println("<<< Вы выбрали команду №4 - ОТМЕНИТЬ БРОНИРОВАНИЕ >>>");
-            int idOfBooking = readNumber("Введите ID Вашего бронирования", 1, 1000);
-
-//            - Здесь мы должны вызвать bookingsController.getBookingByItsId().
+            String idOfBooking = readFlightId("Введите ID Вашего бронирования");
+            bookingsController.deleteBookingByItsId(idOfBooking);
 //            - Если такое бронирование было найдено - оно отменяется. Если нет - пользователю
 //            выводится соответствующее сообщение "Бронирование не было найдено".
 //            - После этого снова отображается главное меню. Пользователь может отменить любое бронирование.
@@ -154,8 +171,10 @@ public class Console {
 
         mainMenuCommands.put("5", () -> {
             System.out.println("<<< Вы выбрали команду №5 - МОИ РЕЙСЫ >>>");
-            int idOfBooking = readNumber("Введите ID Вашего бронирования", 1, 1000);
-
+            Optional<HashMap<String, Booking>> allBookingsOfActiveUser =
+                    bookingsController.getAllUserBookings(activeUser.getLogin(), activeUser.getName(),
+                                                          activeUser.getSurname());
+            bookingsController.printBookingsToConsole(allBookingsOfActiveUser);
 
 //            - Поскольку в нашей программе пользователь сможет работать только после входа в систему,
 //            то здесь мы не будем спрашивать фамилию и имя пользователя. Мы возьмем эту
@@ -166,8 +185,14 @@ public class Console {
 
         mainMenuCommands.put("6", () -> {
             System.out.println("<<< Вы выбрали команду №6 - СОХРАНИТЬ ВНЕСЕННЫЕ ИЗМЕНЕНИЯ >>>");
-
-//            - Нужно, чтобы Дима реализовал класс для работы с файловой системой fileSystemService.
+            try {
+                usersController.saveDataToFile();
+                flightsController.saveDataToFile();
+                bookingsController.saveDataToFile();
+            }
+            catch (BookingOverflowException | FlightOverflowException | UsersOverflowException e) {
+                e.printStackTrace();
+            }
 
             return null;
         });
@@ -183,7 +208,7 @@ public class Console {
         mainMenuCommands.put("8", () -> {
             LoggerService.info("Завершение работы приложения.");
 //            System.out.println("<<< Вы выбрали команду №8 - ЗАВЕРШИТЬ РАБОТУ ПРИЛОЖЕНИЯ >>>");
-            System.exit(1);
+            System.exit(0);
             return null;
         });
 
@@ -222,10 +247,51 @@ public class Console {
 
         loginMenuCommands.put("3", () -> {
             LoggerService.info("Завершение работы приложения.");
-            System.exit(1);
+            System.exit(0);
             return null;
         });
     }
+
+    public static void addCommands4BookingMenu() {
+        bookingMenuCommands = new HashMap<>();
+
+        bookingMenuCommands.put("1", () -> {
+            System.out.println("<<< Вы выбрали команду №1 - Забронировать билеты на рейс по его " +
+                                       "порядковому номеру в списке>>>");
+            createBooking();
+            return null;
+        });
+
+        bookingMenuCommands.put("2", () -> {
+            System.out.println("<<< Вы выбрали команду №2 - Вернуться в главное меню >>>");
+            return null;
+        });
+    }
+
+    public static void createBooking() {
+        int maxNumbOfFlightInList = flightsConsideredAtTheMoment.size();
+        int chosenItemInList = readNumber("Введите порядковый номер рейса в данном списке:",
+                                          1, maxNumbOfFlightInList);
+        int indexOfItemInList = chosenItemInList - 1;
+        // из-за того, что нумерация отфильтрованных рейсов на экране начинается с единицы, а
+        // индексы в структуре данных ArrayList начинаются с ноля. Поэтому мы и делаем эту
+        // корректировку на -1.
+        String flightId = flightsConsideredAtTheMoment.get(indexOfItemInList).getIdOfFlight();
+
+        int numbOfPassengers = readNumber("Введите количество пассажиров, для которых Вы " +
+                                                  "хотите приобрести билеты:", 1, 10);
+        List<Passenger> passengerList =
+                bookingsController.getPassengersDataFromUser(numbOfPassengers);
+        String destinationOfFlight = flightsController.getFlightById(flightId).getDestinationPlace();
+        Booking newBooking = new Booking(activeUser.getLogin(), flightId, passengerList, destinationOfFlight);
+        bookingsController.createBooking(newBooking);
+
+        System.out.println("Вы успешно забронировали билеты. Ниже информация о Вашей брони:");
+        System.out.println("****************************************************************");
+        System.out.println(newBooking.prettyFormat());
+        System.out.println("****************************************************************");
+    }
+
 
     private static void loginAndRegistration() throws Exception {
         while (!userIsAuthorized) {
@@ -252,8 +318,17 @@ public class Console {
     private static void registration() {
         System.out.println("Пожалуйста, введите Ваши данные для регистрации новой учетной записи");
         String login = readString("ЛОГИН: ");
+        boolean loginIsFree = usersController.getLoginIsFreeStatus(login);
+        if (!loginIsFree) {
+            System.out.println("Данный ЛОГИН уже занят. Попробуйте повторить регистрацию.");
+            return;
+        }
+
         String password = readPassword("ПАРОЛЬ: ");
-        boolean successfulRegistration = usersController.registerNewUser(login, password);
+        String name = readString("Введите Ваше имя:");
+        String surname = readString("Введите Вашу фамилию:");
+        boolean successfulRegistration
+                = usersController.registerNewUser(login, password, name, surname);
         if (successfulRegistration) {
             LoggerService.info("Регистрация нового пользователя прошла успешно.");
 
@@ -261,7 +336,8 @@ public class Console {
             System.out.println("Теперь Вам нужно войти в систему, используя ЛОГИН и ПАРОЛЬ, " +
                                        "указанные при регистрации.");
         } else {
-            System.out.println("Данный ЛОГИН уже занят. Попробуйте повторить регистрацию.");
+            System.out.println("Произошла ошибка при регистрации нового пользователя.");
+            System.out.println("Попробуйте повторить процедуру.");
         }
     }
 
@@ -278,6 +354,26 @@ public class Console {
     private static void generateNewFlights() throws BookingOverflowException, FlightOverflowException, UsersOverflowException, IOException {
         FlightsGenerator.generateFlights(500);
         FlightsGenerator.saveDataToFile();
+    }
+
+    private static Optional<HashMap<String, Flight>> findFlights() {
+        String destination = readString("Введите пункт Вашего назначения(город): ");
+        long dateAndTime = readDate("Введите дату и время желаемого вылета в " +
+                                            "формате в формате dd/MM/yyyy-HH:mm:");
+        int numbOfRequestedSeats = readNumber("Введите количество посадочных " +
+                                                      "мест, которые Вы хотели бы " +
+                                                      "забронировать: ", 1, 10);
+        LocalDateTime localDateTime = convertFromUnixMillisToLocalDateT(dateAndTime);
+
+        Optional<HashMap<String, Flight>> filteredFlights =
+                flightsController.getFilteredFlights(destination, localDateTime, numbOfRequestedSeats);
+//            - Здесь мы находим все рейсы по критериям поиска, заданным пользователем.
+
+        return filteredFlights;
+    }
+
+    private static LocalDateTime convertFromUnixMillisToLocalDateT(long timeInUnixMillis) {
+        return new Timestamp(timeInUnixMillis).toLocalDateTime();
     }
 
 

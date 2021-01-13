@@ -29,10 +29,7 @@ public class Main {
             Throwable cause = e.getCause();
             System.out.println(cause);
         }
-        catch (FlightOverflowException e) {
-            e.printStackTrace();
-        }
-        catch (BookingOverflowException e) {
+        catch (FlightOverflowException | BookingOverflowException e) {
             e.printStackTrace();
         }
     }
