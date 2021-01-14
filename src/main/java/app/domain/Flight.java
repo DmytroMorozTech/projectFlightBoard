@@ -101,7 +101,7 @@ public class Flight implements Serializable {
                 TimeZone.getDefault().toZoneId()
         );
 
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy-HH:mm");
         return dtf.format(dateTime);
 
         // This method converts the incoming time (in Unix Millis) into a LocalDateTime object.

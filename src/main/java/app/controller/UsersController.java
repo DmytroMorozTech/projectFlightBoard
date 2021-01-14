@@ -21,8 +21,8 @@ public class UsersController implements UsersDAO, CanWorkWithFileSystem {
         return usersService.logIn(login, password);
     }
 
-    public boolean registerNewUser(String login, String password) {
-        return usersService.registerNewUser(login, password);
+    public boolean registerNewUser(String login, String password, String name, String surname) {
+        return usersService.registerNewUser(login, password, name, surname);
     }
 
     public User getUserByLogin(String login) {
@@ -42,5 +42,10 @@ public class UsersController implements UsersDAO, CanWorkWithFileSystem {
     @Override
     public boolean usersWereUploaded() {
         return usersService.usersWereUploaded();
+    }
+
+    @Override
+    public boolean getLoginIsFreeStatus(String login) {
+        return usersService.getLoginIsFreeStatus(login);
     }
 }
