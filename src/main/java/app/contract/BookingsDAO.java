@@ -15,8 +15,6 @@ public interface BookingsDAO {
 
     boolean deleteBookingByItsId(String idOfBooking);
 
-    boolean deleteBookingByObj(Booking booking);
-
     void createBooking(Booking booking);
 
     List<Passenger> getPassengersDataFromUser(int numbOfPassengers);

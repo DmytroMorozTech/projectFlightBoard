@@ -145,6 +145,4 @@ public class ValidationService {
             return strToDateTimeInMillis(input);
         }
     }
-
-
 }

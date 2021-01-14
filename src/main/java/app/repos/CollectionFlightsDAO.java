@@ -3,16 +3,13 @@ package app.repos;
 import app.contract.CanWorkWithFileSystem;
 import app.contract.FlightsDAO;
 import app.domain.Flight;
-import app.exceptions.BookingOverflowException;
 import app.exceptions.FlightOverflowException;
-import app.exceptions.UsersOverflowException;
 import app.service.fileSystemService.FileSystemService;
 import app.service.loggerService.LoggerService;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,20 +23,13 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public boolean deleteFlight(Flight flight) {
-        String idOfFlight = flight.getIdOfFlight();
-        flights.remove(flight);
-        return flights.containsKey(idOfFlight);
-    }
-
-    @Override
     public HashMap<String, Flight> getAllFlights() {
         return flights;
     }
 
     @Override
     public Optional<HashMap<String, Flight>> getFilteredFlights(String destinationPlace,
-                                                      LocalDateTime departureDateTime, int freeSeats) {
+                                                                LocalDateTime departureDateTime, int freeSeats) {
 
         long departureDtZoned = convertLocalDtToZonedDt(departureDateTime);
         long departureDtZonedPlus24H = convertLocalDtToZonedDt(departureDateTime.plusHours(24));
@@ -76,32 +66,16 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
         HashMap<String, Flight> filteredHashMap = (HashMap<String, Flight>) filteredMap;
 
         return Optional.of(filteredHashMap);
-//        boolean dataFound = filteredMap.size()>0;
-//        return  dataFound ? new Optional((HashMap<String, Flight>)filteredMap) :
     }
 
     @Override
-    public void applyReservation4Flight(int idOfFlight, int numbOfSeats) {
-
+    public void applyReservation4Flight(String idOfFlight, int numbOfSeats) {
+        flights.get(idOfFlight).applyReservation4Flight(numbOfSeats);
     }
 
     @Override
-    public void cancelReservation4Flight(int idOfFlight, int numbOfSeats) {
-
-    }
-
-    private static String toLowerCase(String s) {
-        return s.toLowerCase();
-    }
-
-    @Override
-    public void createFlight(Flight flight) throws BookingOverflowException, FlightOverflowException, UsersOverflowException, IOException {
-        flights.put(flight.getIdOfFlight(), flight);
-        saveDataToFile();
-    }
-
-    private long convertLocalDtToZonedDt(LocalDateTime localDateTime) {
-        return localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+    public void cancelReservation4Flight(String idOfFlight, int numbOfSeats) {
+        flights.get(idOfFlight).cancelReservation4Flight(numbOfSeats);
     }
 
     @Override
@@ -129,15 +103,14 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public void loadData() throws IOException, BookingOverflowException, FlightOverflowException, UsersOverflowException {
-        LoggerService.info("Загрузка файла " + nameOfFile + " с жесткого диска.");
-
+    public void loadData() throws FlightOverflowException {
         try {
             FileSystemService fs = new FileSystemService();
             Object dataFromFS = fs.getDataFromFile(nameOfFile);
             if (dataFromFS instanceof HashMap) {
                 flights = (HashMap<String, Flight>) dataFromFS;
             }
+            LoggerService.info("Загрузка файла " + nameOfFile + " с жесткого диска.");
         }
         catch (IOException | ClassNotFoundException e) {
             throw new FlightOverflowException("Возникла ОШИБКА при чтении файла " + nameOfFile +
@@ -146,17 +119,21 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public boolean saveDataToFile() throws IOException, BookingOverflowException, FlightOverflowException, UsersOverflowException {
-        LoggerService.info("Сохранение данных на жесткий диск в файл " + nameOfFile);
+    public boolean saveDataToFile() throws FlightOverflowException {
 
         try {
             FileSystemService fs = new FileSystemService();
             fs.saveDataToFile(nameOfFile, flights);
+            LoggerService.info("Сохранение данных на жесткий диск в файл " + nameOfFile);
             return true;
         }
         catch (IOException e) {
             throw new FlightOverflowException("Возникла ОШИБКА при сохранении файла " + nameOfFile +
                                                       " на жесткий диск компьютера.");
         }
+    }
+
+    private long convertLocalDtToZonedDt(LocalDateTime localDateTime) {
+        return localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 }

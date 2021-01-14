@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.TimeZone;
 
 public class Flight implements Serializable {
-    private String departurePlace; // in our case it is always "Kyiv"
+    private String departurePlace; // в нашем случае это всегда будет город Киев
     private String destinationPlace;
     private String idOfFlight;
     private long departureTime;
@@ -19,21 +19,13 @@ public class Flight implements Serializable {
         this.departurePlace = departurePlace;
         this.destinationPlace = destinationPlace;
         this.idOfFlight = idOfFlight;
-        this.departureTime = departureTime; // Unix Millis Timestamp (number of Millis since 01.01.1970).
-        this.arrivalTime = arrivalTime;     // Unix Millis Timestamp (number of Millis since 01.01.1970).
+        this.departureTime = departureTime; // Unix Millis Timestamp
+        this.arrivalTime = arrivalTime;     // Unix Millis Timestamp
         this.numberOfFreeSeats = numberOfFreeSeats;
     }
 
     public Flight() {
     }
-
-//    public static void main(String[] args) {
-//        // Let's test how method getPrettyFormattedDate() works.
-//        long l = LocalDateTime.now()
-//                              .atZone(ZoneId.systemDefault())
-//                              .toInstant().toEpochMilli();
-//        System.out.println(getPrettyFormattedDate(l));
-//    }
 
     public void applyReservation4Flight(int numbOfSeats) {
         numberOfFreeSeats = numberOfFreeSeats - numbOfSeats;
@@ -104,20 +96,12 @@ public class Flight implements Serializable {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy-HH:mm");
         return dtf.format(dateTime);
 
-        // This method converts the incoming time (in Unix Millis) into a LocalDateTime object.
-        // Then using this object it creates a String with easily readable representation of the
-        // date and time (that was passed as an argument to this method).
+        // Данный метод конвертирует входящее значение long timeInUnixMillis в объект LocalDateTime.
+        // А после этого, используя DateTimeFormatter, конвертирует в читабельное строковое
+        // представление данной даты с учетом указанного паттерна DateTimeFormatter.
     }
 
     public String prettyFormat() {
-//        return "__________________________________________\n" +
-//                "Departure from: " + departurePlace + "\n" +
-//                "Destination: " + destinationPlace + "\n" +
-//                "Departure time: " + getPrettyFormattedDate(departureTime) + "\n" +
-//                "Arrival time: " + getPrettyFormattedDate(arrivalTime) + "\n" +
-//                "Number of free seats: " + numberOfFreeSeats + "\n" +
-//                "ID of flight: " + idOfFlight + "\n" +
-//                "__________________________________________\n";
         String spaces = generateSpaces(destinationPlace);
 
         return

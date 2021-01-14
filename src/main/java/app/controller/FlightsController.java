@@ -3,14 +3,9 @@ package app.controller;
 import app.contract.CanWorkWithFileSystem;
 import app.contract.FlightsDAO;
 import app.domain.Flight;
-import app.exceptions.BookingOverflowException;
-import app.exceptions.FlightOverflowException;
-import app.exceptions.UsersOverflowException;
 import app.service.FlightsService;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -19,26 +14,6 @@ public class FlightsController implements FlightsDAO, CanWorkWithFileSystem {
 
     public FlightsController() {
         this.flightsService = new FlightsService();
-    }
-
-    @Override
-    public void loadData() throws IOException, BookingOverflowException, FlightOverflowException, UsersOverflowException {
-        flightsService.loadData();
-    }
-
-    @Override
-    public boolean saveDataToFile() throws IOException, BookingOverflowException, FlightOverflowException, UsersOverflowException {
-        return flightsService.saveDataToFile();
-    }
-
-    @Override
-    public void createFlight(Flight flight) throws BookingOverflowException, FlightOverflowException, UsersOverflowException, IOException {
-        flightsService.createFlight(flight);
-    }
-
-    @Override
-    public boolean deleteFlight(Flight flight) {
-        return flightsService.deleteFlight(flight);
     }
 
     @Override
@@ -63,15 +38,14 @@ public class FlightsController implements FlightsDAO, CanWorkWithFileSystem {
         return flightsService.getFlightsForNext24Hours();
     }
 
-
     @Override
-    public void applyReservation4Flight(int idOfFlight, int numbOfSeats) {
-
+    public void applyReservation4Flight(String idOfFlight, int numbOfSeats) {
+        flightsService.applyReservation4Flight(idOfFlight, numbOfSeats);
     }
 
     @Override
-    public void cancelReservation4Flight(int idOfFlight, int numbOfSeats) {
-
+    public void cancelReservation4Flight(String idOfFlight, int numbOfSeats) {
+        flightsService.cancelReservation4Flight(idOfFlight, numbOfSeats);
     }
 
     @Override
@@ -82,6 +56,16 @@ public class FlightsController implements FlightsDAO, CanWorkWithFileSystem {
     @Override
     public boolean flightsWereUploaded() {
         return flightsService.flightsWereUploaded();
+    }
+
+    @Override
+    public void loadData() {
+        flightsService.loadData();
+    }
+
+    @Override
+    public boolean saveDataToFile() {
+        return flightsService.saveDataToFile();
     }
 
     public List<Flight> convertHashMapToList(HashMap<String, Flight> hashMap) {
