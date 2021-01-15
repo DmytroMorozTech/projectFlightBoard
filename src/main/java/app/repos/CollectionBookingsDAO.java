@@ -3,12 +3,8 @@ package app.repos;
 import app.contract.BookingsDAO;
 import app.contract.CanWorkWithFileSystem;
 import app.domain.Booking;
-import app.domain.Flight;
 import app.domain.Passenger;
-import app.domain.User;
 import app.exceptions.BookingOverflowException;
-import app.exceptions.FlightOverflowException;
-import app.exceptions.UsersOverflowException;
 import app.service.fileSystemService.FileSystemService;
 import app.service.loggerService.LoggerService;
 
@@ -48,30 +44,19 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
 
     @Override
     public boolean deleteBookingByItsId(String idOfBooking) {
-        bookings.remove(idOfBooking);
-        boolean bookingWasDeleted = !bookings.containsKey(idOfBooking);
-        if (bookingWasDeleted)
-            LoggerService.info("Выбранная пользователем бронь билетов была удалена.");
-        else if (!bookingWasDeleted)
-            LoggerService.error("Не удалось найти бронь билетов с указанным ID брони. Ошибка " +
-                                        "удаления брони.");
-        return bookingWasDeleted;
-    }
+        if (!bookings.containsKey(idOfBooking)) {
+            System.out.println("Не удалось найти бронь билетов с указанным ID брони. Ошибка " +
+                                       "удаления брони.");
+            return false;
+        }
 
-    @Override
-    public boolean deleteBookingByObj(Booking booking) {
-        String idOfBooking = booking.getIdOfBooking();
         bookings.remove(idOfBooking);
-        return bookings.containsKey(idOfBooking);
+        return !bookings.containsKey(idOfBooking);
     }
-    // перепроверить позже, нужен ли нам этот метод
 
     @Override
     public void createBooking(Booking booking) {
         bookings.put(booking.getIdOfBooking(), booking);
-
-        LoggerService.info("Был вызван метод createBooking(Booking booking). Рейс был " +
-                                   "забронирован.");
     }
 
     @Override
@@ -99,10 +84,11 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
         System.out.println(formattedDateTime);
         System.out.println("*************************************************************");
 
-        if (bookingsOptional.isEmpty())
+        if (bookingsOptional.isEmpty() | bookingsOptional.get().size() == 0) {
             System.out.println("По Вашему запросу не было найдено забронированных рейсов.");
-        else if (bookingsOptional.isPresent()) {
+        } else {
             System.out.println("СПИСОК ЗАБРОНИРОВАННЫХ РЕЙСОВ:");
+
             Collection<Booking> foundBookings = bookingsOptional.get().values();
             for (Booking b : foundBookings)
                 System.out.println(b.prettyFormat());
@@ -111,14 +97,13 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
 
     @Override
     public void loadData() throws BookingOverflowException {
-        LoggerService.info("Загрузка файла " + nameOfFile + " с жесткого диска.");
-
         try {
             FileSystemService fs = new FileSystemService();
             Object dataFromFS = fs.getDataFromFile(nameOfFile);
             if (dataFromFS instanceof HashMap) {
                 bookings = (HashMap<String, Booking>) dataFromFS;
             }
+            LoggerService.info("Загрузка файла " + nameOfFile + " с жесткого диска.");
         }
         catch (IOException | ClassNotFoundException e) {
             throw new BookingOverflowException("Возникла ОШИБКА при чтении файла " + nameOfFile +
@@ -127,12 +112,11 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
     }
 
     @Override
-    public boolean saveDataToFile() throws IOException, BookingOverflowException, FlightOverflowException, UsersOverflowException {
-        LoggerService.info("Сохранение данных на жесткий диск в файл " + nameOfFile);
-
+    public boolean saveDataToFile() throws BookingOverflowException {
         try {
             FileSystemService fs = new FileSystemService();
             fs.saveDataToFile(nameOfFile, bookings);
+            LoggerService.info("Сохранение данных на жесткий диск в файл " + nameOfFile);
             return true;
         }
         catch (IOException e) {

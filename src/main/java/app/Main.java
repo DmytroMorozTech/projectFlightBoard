@@ -18,9 +18,6 @@ public class Main {
         uc = new UsersController();
 
         try {
-            // делаем dependency injection:
-            // через конструктор класса Console передаем внутрь
-            // три заранее подготовленных контроллера.
             Console console = new Console(fc, bc, uc);
             console.main(null);
         }

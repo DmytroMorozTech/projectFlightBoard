@@ -5,12 +5,9 @@ import app.contract.CanWorkWithFileSystem;
 import app.domain.Booking;
 import app.domain.Passenger;
 import app.exceptions.BookingOverflowException;
-import app.exceptions.FlightOverflowException;
-import app.exceptions.UsersOverflowException;
 import app.repos.CollectionBookingsDAO;
-import app.repos.CollectionFlightsDAO;
+import app.service.loggerService.LoggerService;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -24,47 +21,66 @@ public class BookingsService implements BookingsDAO, CanWorkWithFileSystem {
 
     @Override
     public Booking getBookingByItsId(String idOfBooking) {
+        LoggerService.info("Получение бронирования по его номеру (ID).");
         return bookingsDAO.getBookingByItsId(idOfBooking);
     }
 
     @Override
     public Optional<HashMap<String, Booking>> getAllUserBookings(String userLogin, String name,
                                                                  String surname) {
-        return bookingsDAO.getAllUserBookings(userLogin,name,surname);
+        LoggerService.info("Получение всех бронирований конкретного пользователя.");
+        return bookingsDAO.getAllUserBookings(userLogin, name, surname);
     }
 
     @Override
     public boolean deleteBookingByItsId(String idOfBooking) {
-        return bookingsDAO.deleteBookingByItsId(idOfBooking);
-    }
+        boolean wasDeleted = bookingsDAO.deleteBookingByItsId(idOfBooking);
+        if (!wasDeleted) {
+            LoggerService.error("Не удалось найти бронь билетов с указанным ID брони. Ошибка " +
+                                        "удаления брони.");
+            return false;
+        }
 
-    @Override
-    public boolean deleteBookingByObj(Booking booking) {
-        return bookingsDAO.deleteBookingByObj(booking);
+        LoggerService.info("Удаление брони рейса по id.");
+        return true;
     }
 
     @Override
     public void createBooking(Booking booking) {
+        LoggerService.info("Бронирование билетов на рейс.");
         bookingsDAO.createBooking(booking);
     }
 
     @Override
-    public void loadData() throws IOException, BookingOverflowException, FlightOverflowException, UsersOverflowException {
-        bookingsDAO.loadData();
-    }
-
-    @Override
-    public boolean saveDataToFile() throws IOException, BookingOverflowException, FlightOverflowException, UsersOverflowException {
-        return bookingsDAO.saveDataToFile();
-    }
-
-    @Override
     public List<Passenger> getPassengersDataFromUser(int numbOfPassengers) {
+        LoggerService.info("Получение от пользователя данных о пассажирах рейса.");
         return bookingsDAO.getPassengersDataFromUser(numbOfPassengers);
     }
 
     @Override
     public void printBookingsToConsole(Optional<HashMap<String, Booking>> bookingsOptional) {
+        LoggerService.info("Вывод списка забронированных рейсов в консоль.");
         bookingsDAO.printBookingsToConsole(bookingsOptional);
+    }
+
+    @Override
+    public void loadData() {
+        try {
+            bookingsDAO.loadData();
+        }
+        catch (BookingOverflowException ex) {
+            LoggerService.error("BookingOverflowException: " + ex.getMessage());
+        }
+    }
+
+    @Override
+    public boolean saveDataToFile() {
+        try {
+            return bookingsDAO.saveDataToFile();
+        }
+        catch (BookingOverflowException ex) {
+            LoggerService.error("BookingOverflowException: " + ex.getMessage());
+            return false;
+        }
     }
 }

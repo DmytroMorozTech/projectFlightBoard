@@ -3,22 +3,32 @@ package app.controller;
 import app.contract.CanWorkWithFileSystem;
 import app.contract.UsersDAO;
 import app.domain.User;
-import app.exceptions.BookingOverflowException;
-import app.exceptions.FlightOverflowException;
-import app.exceptions.UsersOverflowException;
 import app.service.UsersService;
-
-import java.io.IOException;
 
 public class UsersController implements UsersDAO, CanWorkWithFileSystem {
     private UsersService usersService;
 
-    public UsersController() throws UsersOverflowException {
+    public UsersController() {
         this.usersService = new UsersService();
     }
 
     public boolean logIn(String login, String password) {
         return usersService.logIn(login, password);
+    }
+
+    @Override
+    public void logOut() {
+        usersService.logOut();
+    }
+
+    @Override
+    public boolean getUserIsAuthorizedStatus() {
+        return usersService.getUserIsAuthorizedStatus();
+    }
+
+    @Override
+    public User getActiveUser() {
+        return usersService.getActiveUser();
     }
 
     public boolean registerNewUser(String login, String password, String name, String surname) {
@@ -30,16 +40,6 @@ public class UsersController implements UsersDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public void loadData() throws IOException, BookingOverflowException, FlightOverflowException, UsersOverflowException {
-        usersService.loadData();
-    }
-
-    @Override
-    public boolean saveDataToFile() throws IOException, BookingOverflowException, FlightOverflowException, UsersOverflowException {
-        return usersService.saveDataToFile();
-    }
-
-    @Override
     public boolean usersWereUploaded() {
         return usersService.usersWereUploaded();
     }
@@ -47,5 +47,15 @@ public class UsersController implements UsersDAO, CanWorkWithFileSystem {
     @Override
     public boolean getLoginIsFreeStatus(String login) {
         return usersService.getLoginIsFreeStatus(login);
+    }
+
+    @Override
+    public void loadData() {
+        usersService.loadData();
+    }
+
+    @Override
+    public boolean saveDataToFile() {
+        return usersService.saveDataToFile();
     }
 }

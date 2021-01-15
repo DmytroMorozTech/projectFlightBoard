@@ -1,10 +1,6 @@
 package app.service.flightsGenerator;
 
-import app.contract.CanWorkWithFileSystem;
 import app.domain.Flight;
-import app.exceptions.BookingOverflowException;
-import app.exceptions.FlightOverflowException;
-import app.exceptions.UsersOverflowException;
 import app.service.fileSystemService.FileSystemService;
 import app.service.loggerService.LoggerService;
 
@@ -50,21 +46,19 @@ public class FlightsGenerator {
         citiesOfArrival.put("Тбилиси", 345);
     }
 
-    public static boolean saveDataToFile() throws IOException, FlightOverflowException {
-        LoggerService.info("Сохранение данных на жесткий диск в файл " + nameOfFile);
-
+    public static boolean saveDataToFile(){
         try {
-
             FileSystemService fs = new FileSystemService();
             new PrintWriter(nameOfFile).close(); // очищаем содержимое файла.
 
             fs.saveDataToFile(nameOfFile, flights);
             // записываем в файл все те рейсы, которые были сгенерированы в методе generateFlights()
+            LoggerService.info("Сохранение новых сгенерированных рейсов на жесткий диск в файл " + nameOfFile);
             return true;
         }
-        catch (IOException e) {
-            throw new FlightOverflowException("Возникла ОШИБКА при сохранении файла " + nameOfFile +
-                                                      " на жесткий диск компьютера.");
+        catch (IOException ex) {
+            LoggerService.error("Возникла ошибка при записи на жесткий диск файла " + nameOfFile);
+            return false;
         }
     }
 
@@ -96,7 +90,6 @@ public class FlightsGenerator {
         int deltaMinutes = minutes % 10;
         ZonedDateTime zonedDateTime = zdtTruncatedSec.minusMinutes(deltaMinutes);
         System.out.printf("Random time was generated: %s\n", zonedDateTime);
-
 
         return zonedDateTime.toInstant().toEpochMilli();
     }
