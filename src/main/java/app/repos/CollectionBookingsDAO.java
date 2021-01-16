@@ -5,6 +5,7 @@ import app.contract.CanWorkWithFileSystem;
 import app.domain.Booking;
 import app.domain.Passenger;
 import app.exceptions.BookingOverflowException;
+import app.exceptions.FlightOverflowException;
 import app.service.fileSystemService.FileSystemService;
 import app.service.loggerService.LoggerService;
 
@@ -122,6 +123,23 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
         catch (IOException e) {
             throw new BookingOverflowException("Возникла ОШИБКА при сохранении файла " + nameOfFile +
                                                        " на жесткий диск компьютера.");
+        }
+    }
+
+    public void loadDataForTestingBooking() throws BookingOverflowException {
+        String fileName = "bookingsTest.bin";
+        try {
+            FileSystemService fs = new FileSystemService();
+            Object dataFromFS = fs.getDataFromFile(fileName);
+            if (dataFromFS instanceof HashMap) {
+                bookings = (HashMap<String, Booking>) dataFromFS;
+            }
+            LoggerService.info("Загрузка файла " + fileName + " с жесткого диска. С целью " +
+                    "тестирования BookingService.");
+        }
+        catch (IOException | ClassNotFoundException e) {
+            throw new BookingOverflowException("Возникла ОШИБКА при чтении файла " + fileName +
+                    " с жесткого диска.");
         }
     }
 

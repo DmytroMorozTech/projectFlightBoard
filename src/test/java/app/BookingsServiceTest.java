@@ -62,12 +62,12 @@ class BookingsServiceTest {
         bookingsTest.put("UY654P", booking3);
         bookingsTest.put("QQ876P", booking4);
 
-        // напечатаем созданные брони, чтобы убедиться, что они там есть
-//        Iterator<Map.Entry<String, Booking>> entries = bookings.entrySet().iterator();
-//        while (entries.hasNext()) {
-//            Map.Entry<String, Booking> entry = entries.next();
-//            System.out.println("ID=" + entry.getKey() + " " + entry.getValue().prettyFormat());
-//        }
+
+        Iterator<Map.Entry<String, Booking>> entries = bookingsTest.entrySet().iterator();
+        while (entries.hasNext()) {
+            Map.Entry<String, Booking> entry = entries.next();
+            System.out.println("ID=" + entry.getKey() + " " + entry.getValue().prettyFormat());
+        }
         Assertions.assertTrue(bookingsTest.containsKey("DF321F"));
         Assertions.assertTrue(bookingsTest.containsKey("FS541T"));
     }
