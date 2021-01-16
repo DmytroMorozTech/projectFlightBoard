@@ -23,7 +23,7 @@ public class LoggerService {
                         logText + "\n" +
                         "__________________________________________________________________ \n";
 
-        System.out.println(textMessageForLog);
+//        System.out.println(textMessageForLog);
         // за счет этой строки те данные лога, которые будут сохраняться в файл application.log,
         // во время работы программы также будут выводиться в консоль.
 

@@ -46,7 +46,7 @@ public class FlightsGenerator {
         citiesOfArrival.put("Тбилиси", 345);
     }
 
-    public static boolean saveDataToFile(){
+    public static boolean saveDataToFile() {
         try {
             FileSystemService fs = new FileSystemService();
             new PrintWriter(nameOfFile).close(); // очищаем содержимое файла.
@@ -125,7 +125,7 @@ public class FlightsGenerator {
 
         fillCitiesOfArrival();
 
-        for (int i = 0; i <= numberOfFlights; i++) {
+        while (flights.size() != numberOfFlights) {
             String destinationPlace = getRandomMapKey(citiesOfArrival);
             long departureTime = generateRandDepartureTime();
             long arrivalTime = departureTime + citiesOfArrival.get(destinationPlace) * millisIn1Min;
