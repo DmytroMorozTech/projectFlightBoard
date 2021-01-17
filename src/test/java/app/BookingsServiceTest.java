@@ -1,86 +1,56 @@
 package app;
 
-import app.controller.BookingsController;
 import app.domain.Booking;
 import app.domain.Passenger;
 import app.exceptions.BookingOverflowException;
+import app.service.BookingsService;
 import app.service.fileSystemService.FileSystemService;
-import app.service.loggerService.LoggerService;
+import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.io.PrintStream;
 import java.util.*;
-import java.util.stream.Collectors;
-
-import static app.service.validationService.ValidationService.readString;
 
 class BookingsServiceTest {
-    private static BookingsController bookingsController;
+    BookingsService bookingService;
+    private PrintStream old;
 
-    private Booking booking1, booking2, booking3, booking4;
-    private Passenger passenger1, passenger2, passenger3, passenger4, passenger5, passenger6, passenger7;
-    public static HashMap<String, Booking> bookingsTest = new HashMap<>();
-    String nameOfFile = "bookingsTest.bin";
+    // Для тестирования было заранее подготовлено 4 бронирования:
 
-    // база бронирований будет доступна перед запуском каждого теста
+    //   ID=QQ876P Номер рейса: FL713A  |  Номер бронирования: BK335O  |  Пункт назначения: Вена
+    //   Login заказчика бронирования: Aleksey
+    //   Пассажиры: Катерина Кухар, Николас Науменко
+
+    //   ID=FS541T Номер рейса: FL802Z  |  Номер бронирования: BK104W  |  Пункт назначения: Днепр
+    //   Login заказчика бронирования: Anton
+    //   Пассажиры: Петр Порошенко, Виктор Романюк
+
+    //   ID=UY654P Номер рейса: FL438Z  |  Номер бронирования: BK403K  |  Пункт назначения: Лиссабон
+    //   Login заказчика бронирования: Sergey
+    //   Пассажиры: Сергей Оксимчук, Валентина Варшавская
+
+    //   ID=DF321F Номер рейса: FL990N  |  Номер бронирования: BK113M  |  Пункт назначения: Лион
+    //   Login заказчика бронирования: Sergey
+    //   Пассажиры: Анна Зубрицкая, Валентина Романюк
+
     @BeforeEach
-    void createBooking() throws BookingOverflowException {
-        bookingsController = new BookingsController();
-
-        // создадим для тестированний несколько бронирований
-        List<Passenger> list1 = new ArrayList<>();
-        List<Passenger> list2 = new ArrayList<>();
-        List<Passenger> list3 = new ArrayList<>();
-        List<Passenger> list4 = new ArrayList<>();
-        passenger1 = new Passenger("Анна", "Зубрицкая");
-        passenger2 = new Passenger("Валентина", "Романюк");
-        passenger3 = new Passenger("Петр", "Порошенко");
-        passenger4 = new Passenger("Виктор", "Романюк");
-        passenger5 = new Passenger("Сергей", "Оксимчук");
-        passenger6 = new Passenger("Валентина", "Варшавская");
-        passenger7 = new Passenger("Катерина", "Кухар");
-        Passenger passenger8 = new Passenger("Николас", "Науменко");
-        list1.add(passenger1);
-        list1.add(passenger2);
-        list2.add(passenger3);
-        list2.add(passenger4);
-        list3.add(passenger5);
-        list3.add(passenger6);
-        list4.add(passenger7);
-        list4.add(passenger8);
-        booking1 = new Booking("Sergey", "FL990N", list1, "Лион");
-        booking2 = new Booking("Anton", "FL802Z", list2, "Днепр");
-        booking3 = new Booking("Sergey", "FL438Z", list3, "Лиссабон");
-        booking4 = new Booking("Aleksey", "FL713A", list4, "Вена");
-
-        bookingsTest.put("DF321F", booking1);
-        bookingsTest.put("FS541T", booking2);
-        bookingsTest.put("UY654P", booking3);
-        bookingsTest.put("QQ876P", booking4);
-
-
-        Iterator<Map.Entry<String, Booking>> entries = bookingsTest.entrySet().iterator();
-        while (entries.hasNext()) {
-            Map.Entry<String, Booking> entry = entries.next();
-            System.out.println("ID=" + entry.getKey() + " " + entry.getValue().prettyFormat());
-        }
-        Assertions.assertTrue(bookingsTest.containsKey("DF321F"));
-        Assertions.assertTrue(bookingsTest.containsKey("FS541T"));
+    void getDataForTesting() throws BookingOverflowException {
+        bookingService = new BookingsService();
+        bookingService.loadDataForTestingBooking();
     }
 
     @Test
     void getBookingByItsId() {
-        System.out.println("\nTesting getBookingByItsId():");
-        Booking gotBooking1 = bookingsTest.get("DF321F");
-        Assertions.assertEquals(booking1, gotBooking1);
-
-        Booking gotBooking3 = bookingsTest.get("UY654P");
-        Assertions.assertNotEquals(booking3, gotBooking1);
-        Assertions.assertEquals(booking3, gotBooking3);
+        System.out.println("*******************************************************************");
+        System.out.println("\nTesting getAllUserBookings():");
+        Booking gotBooking1 = bookingService.getBookingByItsId("DF321F");
+        Booking gotBooking3 = bookingService.getBookingByItsId("FS541T");
+        Assertions.assertNotNull(gotBooking1);
+        Assertions.assertNotNull(gotBooking3);
         System.out.println("All are OK!");
     }
 
@@ -88,111 +58,78 @@ class BookingsServiceTest {
     void getAllUserBookings() {
         System.out.println("*******************************************************************");
         System.out.println("\nTesting getAllUserBookings():");
-        String userLogin = "Sergey";
-        Map<String, Booking> filteredMap =
-                bookingsTest.entrySet().stream()
-                        .filter(b -> b.getValue().getUserLogin().equals(userLogin)
-                                | b.getValue().getPassengerList().contains(passenger1))
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        String name1 = "Сергей";
+        String surName1 = "Романюк";
+        String userLogin1 = "Sergey";
+        HashMap<String, Booking> filteredUserBookings1 = bookingService.getAllUserBookings(userLogin1, name1, surName1).get();
 
-        // юзер "Sergey" забронировал 2 рейса, давайте проверим.
-        Assertions.assertEquals(2, filteredMap.size());
+        // напечатаем
+//        Iterator<Map.Entry<String, Booking>> entries = filteredUserBookings1.entrySet().iterator();
+//        while (entries.hasNext()) {
+//            Map.Entry<String, Booking> entry = entries.next();
+//            System.out.println("ID=" + entry.getKey() + " " + entry.getValue().prettyFormat());
+//        }
+        Assertions.assertEquals(2, filteredUserBookings1.size());
 
-        // юзер "Anton" забронировал 1 рейс, давайте проверим.
+        String name2 = "Антон";
+        String surName2 = "Озирский";
         String userLogin2 = "Anton";
-        Map<String, Booking> filteredMap2 =
-                bookingsTest.entrySet().stream()
-                        .filter(b -> b.getValue().getUserLogin().equals(userLogin2)
-                                | b.getValue().getPassengerList().contains(passenger3))
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        Assertions.assertEquals(1, filteredMap2.size());
+        HashMap<String, Booking> filteredUserBookings2 = bookingService.getAllUserBookings(userLogin2, name2, surName2).get();
+        Assertions.assertEquals(1, filteredUserBookings2.size());
         System.out.println("All are OK!");
-
     }
 
     @Test
     void deleteBookingByItsId() {
         System.out.println("*******************************************************************");
         System.out.println("\nTesting deleteBookingByItsId():");
-        Assertions.assertEquals(4, bookingsTest.size());
-        bookingsTest.remove("DF321F");
-        Assertions.assertEquals(3, bookingsTest.size());
-        bookingsTest.remove("QQ876P");
-        Assertions.assertEquals(2, bookingsTest.size());
-
-        //печатаем, чтобы убедиться, что юзеры с указанными "ID" удаляются
-//        Iterator<Map.Entry<String, Booking>> entries = bookingsTest.entrySet().iterator();
-//        while (entries.hasNext()) {
-//            Map.Entry<String, Booking> entry = entries.next();
-//            System.out.println("ID=" + entry.getKey() + " " + entry.getValue().prettyFormat());
-//        }
+        boolean bookingWasDeletedCorrect1 = bookingService.deleteBookingByItsId("DF321F");
+        Assertions.assertTrue(bookingWasDeletedCorrect1);
+        boolean bookingWasDeletedCorrect2 = bookingService.deleteBookingByItsId("AAAAAA");
+        Assertions.assertFalse(bookingWasDeletedCorrect2);
         System.out.println("All are OK!");
-
     }
 
     @Test
-    void saveDataToFile() throws BookingOverflowException {
+    void createBooking() {
         System.out.println("*******************************************************************");
-        System.out.println("\nTesting saveDataToFile():");
-        try {
-            FileSystemService fs = new FileSystemService();
-            fs.saveDataToFile(nameOfFile, bookingsTest);
-        } catch (IOException e) {
-            throw new BookingOverflowException("Возникла ОШИБКА при сохранении файла " + nameOfFile +
-                    " на жесткий диск компьютера.");
-        }
-        int bookingsTestLength = bookingsTest.size();
-        Assertions.assertEquals(4, bookingsTestLength);
-        Assertions.assertNotEquals(5, bookingsTestLength);
-        Booking gotBooking1 = bookingsTest.get("DF321F");
-        Assertions.assertEquals(booking1, gotBooking1);
-        System.out.println("All are OK!");
-
-    }
-
-    @Test
-    void loadData() throws BookingOverflowException {
-        System.out.println("*******************************************************************");
-        System.out.println("\nTesting loadData():");
-        HashMap<String, Booking> bookingsTesting = new HashMap<>();
-        try {
-            FileSystemService fs = new FileSystemService();
-            Object dataFromFS = fs.getDataFromFile(nameOfFile);
-            if (dataFromFS instanceof HashMap) {
-                bookingsTesting = (HashMap<String, Booking>) dataFromFS;
-            }
-        } catch (IOException | ClassNotFoundException e) {
-            throw new BookingOverflowException("Возникла ОШИБКА при чтении файла " + nameOfFile +
-                    " с жесткого диска.");
-        }
-        int bookingsTestLength = bookingsTesting.size();
-        Assertions.assertEquals(4, bookingsTestLength);
-        Assertions.assertNotEquals(5, bookingsTestLength);
+        System.out.println("\nTesting createBooking():");
+        //подготовим данные для новой брони полета
+        List<Passenger> list5 = new ArrayList<>();
+        Passenger passenger8 = new Passenger("Николас", "Науменко");
+        list5.add(passenger8);
+        Booking newBooking = new Booking("Aleksey", "FL713A", list5, "Вена");
+        bookingService.createBooking(newBooking);
+        HashMap<String, Booking> checkIfNewBooking = bookingService.getAllUserBookings("Aleksey", "Николас", "Науменко").get();
+        String newBookingId = checkIfNewBooking.entrySet().iterator().next().getKey();
+        Booking newBookingValue = checkIfNewBooking.entrySet().iterator().next().getValue();
+        Assert.assertEquals(bookingService.getBookingByItsId(newBookingId), newBookingValue);
         System.out.println("All are OK!");
     }
-
 
     @Test
     void getPassengersDataFromUser() {
         System.out.println("*******************************************************************");
-        System.out.println("\nTesting loadData():");
+        System.out.println("\nTesting createBooking():");
         List<Passenger> passengersList = new ArrayList<>();
-
         String passengerName1 = "Анна";
         String passengerSurname1 = "Зубрицкая";
-
         String passengerName2 = "Сергей";
         String passengerSurname2 = "Романюк";
         Passenger newPassenger1 = new Passenger(passengerName1, passengerSurname1);
         Passenger newPassenger2 = new Passenger(passengerName2, passengerSurname2);
         passengersList.add(newPassenger1);
         passengersList.add(newPassenger2);
-
         Assertions.assertEquals(2, passengersList.size());
         System.out.println("All are OK!");
     }
 
     @Test
     void printBookingsToConsole() {
+        System.out.println("*******************************************************************");
+        System.out.println("\nTesting createBooking():");
+        Optional<HashMap<String, Booking>> gotSomeBooking = bookingService.getAllUserBookings("Aleksey", "Николас", "Науменко");
+        bookingService.printBookingsToConsole(gotSomeBooking);
+        System.out.println("All are OK!");
     }
 }
