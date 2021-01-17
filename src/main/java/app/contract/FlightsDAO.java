@@ -16,7 +16,7 @@ public interface FlightsDAO {
 
     Flight getFlightById(String idOfFlight);
 
-    Optional<HashMap<String, Flight>> getFlightsForNext24Hours();
+    Optional<HashMap<String, Flight>> getFlightsForNext24Hours(LocalDateTime now);
 
     void printFlightsToConsole(Optional<HashMap<String, Flight>> flightsOptional);
 

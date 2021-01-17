@@ -34,8 +34,8 @@ public class FlightsController implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Optional<HashMap<String, Flight>> getFlightsForNext24Hours() {
-        return flightsService.getFlightsForNext24Hours();
+    public Optional<HashMap<String, Flight>> getFlightsForNext24Hours(LocalDateTime now) {
+        return flightsService.getFlightsForNext24Hours(now);
     }
 
     @Override
