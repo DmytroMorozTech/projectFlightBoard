@@ -4,16 +4,16 @@ import app.domain.Booking;
 import app.domain.Passenger;
 import app.exceptions.BookingOverflowException;
 import app.service.BookingsService;
+import app.service.fileSystemService.FileSystemService;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 class BookingsServiceTests {
     BookingsService bookingService;
@@ -94,24 +94,42 @@ class BookingsServiceTests {
     void createBooking() {
         System.out.println("*******************************************************************");
         System.out.println("\nTesting createBooking():");
-
+        //подготовим данные для новой брони полета
+        List<Passenger> list5 = new ArrayList<>();
+        Passenger passenger8 = new Passenger("Николас", "Науменко");
+        list5.add(passenger8);
+        Booking newBooking = new Booking("Aleksey", "FL713A", list5, "Вена");
+        bookingService.createBooking(newBooking);
+        HashMap<String, Booking> checkIfNewBooking = bookingService.getAllUserBookings("Aleksey", "Николас", "Науменко").get();
+        String newBookingId = checkIfNewBooking.entrySet().iterator().next().getKey();
+        Booking newBookingValue = checkIfNewBooking.entrySet().iterator().next().getValue();
+        Assert.assertEquals(bookingService.getBookingByItsId(newBookingId), newBookingValue);
         System.out.println("All are OK!");
-
     }
 
     @Test
     void getPassengersDataFromUser() {
+        System.out.println("*******************************************************************");
+        System.out.println("\nTesting createBooking():");
+        List<Passenger> passengersList = new ArrayList<>();
+        String passengerName1 = "Анна";
+        String passengerSurname1 = "Зубрицкая";
+        String passengerName2 = "Сергей";
+        String passengerSurname2 = "Романюк";
+        Passenger newPassenger1 = new Passenger(passengerName1, passengerSurname1);
+        Passenger newPassenger2 = new Passenger(passengerName2, passengerSurname2);
+        passengersList.add(newPassenger1);
+        passengersList.add(newPassenger2);
+        Assertions.assertEquals(2, passengersList.size());
+        System.out.println("All are OK!");
     }
 
     @Test
     void printBookingsToConsole() {
-    }
-
-    @Test
-    void loadData() {
-    }
-
-    @Test
-    void saveDataToFile() {
+        System.out.println("*******************************************************************");
+        System.out.println("\nTesting createBooking():");
+        Optional<HashMap<String, Booking>> gotSomeBooking = bookingService.getAllUserBookings("Aleksey", "Николас", "Науменко");
+        bookingService.printBookingsToConsole(gotSomeBooking);
+        System.out.println("All are OK!");
     }
 }
