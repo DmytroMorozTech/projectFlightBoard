@@ -54,9 +54,9 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Optional<HashMap<String, Flight>> getFlightsForNext24Hours() {
-        long currentTimeZoned = convertLocalDtToZonedDt(LocalDateTime.now());
-        long currentTimePlus24hZoned = convertLocalDtToZonedDt(LocalDateTime.now().plusHours(24));
+    public Optional<HashMap<String, Flight>> getFlightsForNext24Hours(LocalDateTime now) {
+        long currentTimeZoned = convertLocalDtToZonedDt(now);
+        long currentTimePlus24hZoned = convertLocalDtToZonedDt(now.plusHours(24));
 
         Map<String, Flight> filteredMap =
                 flights.entrySet().stream()   //Stream<Map.Entry<String,Flight>>
@@ -135,5 +135,26 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
 
     private long convertLocalDtToZonedDt(LocalDateTime localDateTime) {
         return localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+
+
+//    ---------------------------------------------------------------------------------
+    // Мы делаем перегрузку (overload) данного метода для того, чтобы была возможность при
+    // тестировании FlightsService загружать данные из отдельного файла с базой данных рейсов.
+    public void loadDataForTesting() throws FlightOverflowException {
+        String fileName = "flightsForTestingOnly.bin";
+        try {
+            FileSystemService fs = new FileSystemService();
+            Object dataFromFS = fs.getDataFromFile(fileName);
+            if (dataFromFS instanceof HashMap) {
+                flights = (HashMap<String, Flight>) dataFromFS;
+            }
+            LoggerService.info("Загрузка файла " + fileName + " с жесткого диска. С целью " +
+                                       "тестирования FlightsService.");
+        }
+        catch (IOException | ClassNotFoundException e) {
+            throw new FlightOverflowException("Возникла ОШИБКА при чтении файла " + fileName +
+                                                      " с жесткого диска.");
+        }
     }
 }

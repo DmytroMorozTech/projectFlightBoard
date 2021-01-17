@@ -39,9 +39,9 @@ public class FlightsService implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Optional<HashMap<String, Flight>> getFlightsForNext24Hours() {
+    public Optional<HashMap<String, Flight>> getFlightsForNext24Hours(LocalDateTime now) {
         LoggerService.info("Формирование списка рейсов на ближайшие 24 часа");
-        return flightsDAO.getFlightsForNext24Hours();
+        return flightsDAO.getFlightsForNext24Hours(now);
     }
 
     @Override
@@ -84,6 +84,15 @@ public class FlightsService implements FlightsDAO, CanWorkWithFileSystem {
         } catch (FlightOverflowException ex) {
             LoggerService.error("FlightOverflowException: " + ex.getMessage());
             return false;
+        }
+    }
+
+    public void loadDataForTesting(){
+        try {
+            flightsDAO.loadDataForTesting();
+        }
+        catch (FlightOverflowException e) {
+            e.printStackTrace();
         }
     }
 }

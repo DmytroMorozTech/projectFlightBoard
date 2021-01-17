@@ -107,7 +107,8 @@ public class Console {
 
         mainMenuCommands.put("1", () -> {
             System.out.println("<<< Вы выбрали команду №1 - ОТОБРАЗИТЬ ОНЛАЙН-ТАБЛО >>>");
-            Optional<HashMap<String, Flight>> flightsForNext24Hours = flightsController.getFlightsForNext24Hours();
+            Optional<HashMap<String, Flight>> flightsForNext24Hours =
+                    flightsController.getFlightsForNext24Hours(LocalDateTime.now());
             flightsController.printFlightsToConsole(flightsForNext24Hours);
             return null;
         });

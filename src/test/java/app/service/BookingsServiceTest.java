@@ -1,17 +1,15 @@
-package app;
+package app.service;
 
 import app.domain.Booking;
 import app.domain.Passenger;
 import app.exceptions.BookingOverflowException;
 import app.service.BookingsService;
 import app.service.fileSystemService.FileSystemService;
-import org.junit.Assert;
+//import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 
@@ -103,7 +101,7 @@ class BookingsServiceTest {
         HashMap<String, Booking> checkIfNewBooking = bookingService.getAllUserBookings("Aleksey", "Николас", "Науменко").get();
         String newBookingId = checkIfNewBooking.entrySet().iterator().next().getKey();
         Booking newBookingValue = checkIfNewBooking.entrySet().iterator().next().getValue();
-        Assert.assertEquals(bookingService.getBookingByItsId(newBookingId), newBookingValue);
+        Assertions.assertEquals(bookingService.getBookingByItsId(newBookingId), newBookingValue);
         System.out.println("All are OK!");
     }
 
