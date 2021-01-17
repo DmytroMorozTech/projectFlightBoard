@@ -37,7 +37,7 @@ public class BookingsService implements BookingsDAO, CanWorkWithFileSystem {
         boolean wasDeleted = bookingsDAO.deleteBookingByItsId(idOfBooking);
         if (!wasDeleted) {
             LoggerService.error("Не удалось найти бронь билетов с указанным ID брони. Ошибка " +
-                                        "удаления брони.");
+                    "удаления брони.");
             return false;
         }
 
@@ -67,8 +67,7 @@ public class BookingsService implements BookingsDAO, CanWorkWithFileSystem {
     public void loadData() {
         try {
             bookingsDAO.loadData();
-        }
-        catch (BookingOverflowException ex) {
+        } catch (BookingOverflowException ex) {
             LoggerService.error("BookingOverflowException: " + ex.getMessage());
         }
     }
@@ -77,10 +76,17 @@ public class BookingsService implements BookingsDAO, CanWorkWithFileSystem {
     public boolean saveDataToFile() {
         try {
             return bookingsDAO.saveDataToFile();
-        }
-        catch (BookingOverflowException ex) {
+        } catch (BookingOverflowException ex) {
             LoggerService.error("BookingOverflowException: " + ex.getMessage());
             return false;
+        }
+    }
+
+    public void loadDataForTestingBooking() throws BookingOverflowException {
+        try {
+            bookingsDAO.loadDataForTestingBooking();
+        } catch (BookingOverflowException ex) {
+            LoggerService.error("BookingOverflowException: " + ex.getMessage());
         }
     }
 }
