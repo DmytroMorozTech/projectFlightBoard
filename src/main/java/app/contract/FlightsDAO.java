@@ -1,28 +1,32 @@
 package app.contract;
 
+import app.domain.Booking;
 import app.domain.Flight;
+import app.domain.FlightRoute;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 public interface FlightsDAO {
 
     HashMap<String, Flight> getAllFlights();
 
-    Optional<HashMap<String, Flight>> getFilteredFlights(String destinationPlace,
-                                                         LocalDateTime departureDateTime,
-                                                         int freeSeats);
+    Optional<List<FlightRoute>> getFilteredFlights(String departurePlace,
+                                                   String destinationPlace,
+                                                   LocalDateTime departureDateTime,
+                                                   int freeSeats);
 
     Flight getFlightById(String idOfFlight);
 
-    Optional<HashMap<String, Flight>> getFlightsForNext24Hours(LocalDateTime now);
+    Optional<List<Flight>> getFlightsForNext24Hours(LocalDateTime now);
 
-    void printFlightsToConsole(Optional<HashMap<String, Flight>> flightsOptional);
+    void printFlightsToConsole(Optional<List<Flight>> flightsOptional);
 
-    void applyReservation4Flight(String idOfFlight, int numbOfSeats);
+    void applySeatsReserve4Booking(Booking booking);
 
-    void cancelReservation4Flight(String idOfFlight, int numbOfSeats);
+    void cancelSeatsReserve4Booking(Booking booking);
 
     boolean flightsWereUploaded();
 

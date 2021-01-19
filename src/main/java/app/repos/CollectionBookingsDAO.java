@@ -12,6 +12,7 @@ import app.service.loggerService.LoggerService;
 import static app.service.validationService.ValidationService.*;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -89,10 +90,13 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
             System.out.println("По Вашему запросу не было найдено забронированных рейсов.");
         } else {
             System.out.println("СПИСОК ЗАБРОНИРОВАННЫХ РЕЙСОВ:");
+            System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
             Collection<Booking> foundBookings = bookingsOptional.get().values();
-            for (Booking b : foundBookings)
+            for (Booking b : foundBookings) {
                 System.out.println(b.prettyFormat());
+                System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            }
         }
     }
 
@@ -116,6 +120,7 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
     public boolean saveDataToFile() throws BookingOverflowException {
         try {
             FileSystemService fs = new FileSystemService();
+            new PrintWriter(nameOfFile).close(); // очищаем содержимое файла.
             fs.saveDataToFile(nameOfFile, bookings);
             LoggerService.info("Сохранение данных на жесткий диск в файл " + nameOfFile);
             return true;
@@ -135,11 +140,11 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
                 bookings = (HashMap<String, Booking>) dataFromFS;
             }
             LoggerService.info("Загрузка файла " + fileName + " с жесткого диска. С целью " +
-                    "тестирования BookingService.");
+                                       "тестирования BookingService.");
         }
         catch (IOException | ClassNotFoundException e) {
             throw new BookingOverflowException("Возникла ОШИБКА при чтении файла " + fileName +
-                    " с жесткого диска.");
+                                                       " с жесткого диска.");
         }
     }
 
