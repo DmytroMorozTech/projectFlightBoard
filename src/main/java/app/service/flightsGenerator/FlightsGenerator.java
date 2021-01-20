@@ -15,35 +15,48 @@ public class FlightsGenerator {
     private static HashMap<String, Flight> flights = new HashMap<>();
     private static final String nameOfFile = "flights.bin";
 
-    private static HashMap<String, Integer> citiesOfArrival = new HashMap<>();
-    // key - city of arrival; value - duration of flight (in minutes);
+    private static List<ShortFlightData> sampleFlights = new ArrayList<>();
 
-    private static void fillCitiesOfArrival() {
-        citiesOfArrival.put("Одесса", 80);
-        citiesOfArrival.put("Стамбул", 120);
-        citiesOfArrival.put("Днепр", 80);
-        citiesOfArrival.put("Львов", 95);
-        citiesOfArrival.put("Минск", 60);
-        citiesOfArrival.put("Прага", 130);
-        citiesOfArrival.put("Париж", 210);
-        citiesOfArrival.put("Эссен", 540);
-        citiesOfArrival.put("Лион", 190);
-        citiesOfArrival.put("Мале", 540);
-        citiesOfArrival.put("Анкара", 125);
-        citiesOfArrival.put("Ереван", 165);
-        citiesOfArrival.put("Рига", 105);
-        citiesOfArrival.put("Лондон", 215);
-        citiesOfArrival.put("Вена", 120);
-        citiesOfArrival.put("Милан", 180);
-        citiesOfArrival.put("София", 135);
-        citiesOfArrival.put("Доха", 300);
-        citiesOfArrival.put("Батуми", 150);
-        citiesOfArrival.put("Ивано-Франковск", 95);
-        citiesOfArrival.put("Запорожье", 75);
-        citiesOfArrival.put("Дюссельдорф", 200);
-        citiesOfArrival.put("Лиссабон", 305);
-        citiesOfArrival.put("Амстердам", 185);
-        citiesOfArrival.put("Тбилиси", 345);
+    private static void fillSampleFlights() {
+        sampleFlights.add(new ShortFlightData("Киев", "KBP", "Амстердам", "AMS", 185));
+        sampleFlights.add(new ShortFlightData("Амстердам", "AMS", "Нью-Йорк", "JFK", 495));
+        sampleFlights.add(new ShortFlightData("Нью-Йорк", "JFK", "Амстердам", "AMS", 420));
+        sampleFlights.add(new ShortFlightData("Амстердам", "AMS", "Киев", "KBP", 160));
+
+        sampleFlights.add(new ShortFlightData("Киев", "KBP", "Франкфурт-на-Майне", "FRA", 170));
+        sampleFlights.add(new ShortFlightData("Франкфурт-на-Майне", "FRA", "Монреаль", "YUL", 480));
+        sampleFlights.add(new ShortFlightData("Монреаль", "YUL", "Франкфурт-на-Майне", "FRA", 425));
+        sampleFlights.add(new ShortFlightData("Франкфурт-на-Майне", "FRA", "Киев", "KBP", 145));
+
+        sampleFlights.add(new ShortFlightData("Киев", "KBP", "Стамбул", "IST", 130));
+        sampleFlights.add(new ShortFlightData("Стамбул", "IST", "Мальта", "MLA", 145));
+        sampleFlights.add(new ShortFlightData("Мальта", "MLA", "Стамбул", "IST", 155));
+        sampleFlights.add(new ShortFlightData("Стамбул", "IST",  "Киев", "KBP",  135));
+
+        sampleFlights.add(new ShortFlightData("Стамбул", "IST", "Амстердам", "AMS", 220));
+        sampleFlights.add(new ShortFlightData("Амстердам", "AMS", "Мадрид", "MAD", 160));
+        sampleFlights.add(new ShortFlightData("Стамбул", "IST", "Франкфурт-на-Майне", "FRA", 80));
+        sampleFlights.add(new ShortFlightData("Франкфурт-на-Майне", "FRA", "Мадрид", "MAD", 155));
+
+
+        sampleFlights.add(new ShortFlightData("Киев", "KBP", "Лондон", "LHR", 215));
+        sampleFlights.add(new ShortFlightData("Лондон", "LHR", "Мадрид", "MAD", 150));
+        sampleFlights.add(new ShortFlightData("Лондон", "LHR", "Нью-Йорк", "JFK", 495));
+        sampleFlights.add(new ShortFlightData("Лондон", "LCY", "Нью-Йорк", "JFK", 490));
+        sampleFlights.add(new ShortFlightData("Нью-Йорк", "JFK", "Лондон", "LHR", 490));
+        sampleFlights.add(new ShortFlightData("Нью-Йорк", "JFK", "Лондон", "LCY", 490));
+
+
+        sampleFlights.add(new ShortFlightData("Киев", "KBP", "Лондон", "LCY", 210));
+        sampleFlights.add(new ShortFlightData("Киев", "KBP", "Лондон", "LHR", 225));
+        sampleFlights.add(new ShortFlightData("Киев", "KBP", "Вена", "VIE", 120));
+        sampleFlights.add(new ShortFlightData("Вена", "VIE", "Киев", "KBP",120));
+        sampleFlights.add(new ShortFlightData("Киев", "KBP", "Милан", "MIL",180));
+        sampleFlights.add(new ShortFlightData("Милан", "MIL","Нью-Йорк", "JFK", 555));
+
+
+//        sampleFlights.add(new ShortFlightData("Киев", "KBP","Ивано-Франковск", "IFO", 95));
+//        sampleFlights.add(new ShortFlightData("Ивано-Франковск", "IFO","Лондон", "LHR", 120));
     }
 
     public static boolean saveDataToFile() {
@@ -89,7 +102,7 @@ public class FlightsGenerator {
         int minutes = zdtTruncatedSec.getMinute();
         int deltaMinutes = minutes % 10;
         ZonedDateTime zonedDateTime = zdtTruncatedSec.minusMinutes(deltaMinutes);
-        System.out.printf("Random time was generated: %s\n", zonedDateTime);
+//        System.out.printf("Random time was generated: %s\n", zonedDateTime);
 
         return zonedDateTime.toInstant().toEpochMilli();
     }
@@ -101,7 +114,7 @@ public class FlightsGenerator {
     private static String generateIdOfFlight() {
         char randomCapitalCharacter = (char) (generateRandomInt(65, 90));
         String idOfFlight =
-                "FL" + String.valueOf(generateRandomInt(100, 1000)) + randomCapitalCharacter;
+                "FL" + String.valueOf(generateRandomInt(100, 999)) + randomCapitalCharacter;
         return idOfFlight;
     }
     // метод для генерации рандомного буквенно-числового ID для рейса.
@@ -121,19 +134,20 @@ public class FlightsGenerator {
 
     public static void generateFlights(int numberOfFlights) {
         final long millisIn1Min = 1000 * 60;
-        final String departureCity = "Киев";
 
-        fillCitiesOfArrival();
+        fillSampleFlights();
 
         while (flights.size() != numberOfFlights) {
-            String destinationPlace = getRandomMapKey(citiesOfArrival);
+            int randomIndex = generateRandomInt(0, sampleFlights.size() - 1);
+            ShortFlightData flightData = sampleFlights.get(randomIndex);
             long departureTime = generateRandDepartureTime();
-            long arrivalTime = departureTime + citiesOfArrival.get(destinationPlace) * millisIn1Min;
+            long arrivalTime = departureTime + flightData.getFlightDurationMin() * millisIn1Min;
             String idOfFlight = generateIdOfFlight();
             int numbOfSeats = generateNumbOfFreeSeats();
-            Flight generatedFlight = new Flight(departureCity, destinationPlace, idOfFlight,
+            Flight generatedFlight = new Flight(flightData, idOfFlight,
                                                 departureTime, arrivalTime, numbOfSeats);
             flights.put(idOfFlight, generatedFlight);
+            System.out.println("Random flight was generated.");
         }
     }
 

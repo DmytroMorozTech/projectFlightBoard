@@ -2,7 +2,9 @@ package app.controller;
 
 import app.contract.CanWorkWithFileSystem;
 import app.contract.FlightsDAO;
+import app.domain.Booking;
 import app.domain.Flight;
+import app.domain.FlightRoute;
 import app.service.FlightsService;
 
 import java.time.LocalDateTime;
@@ -22,10 +24,12 @@ public class FlightsController implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Optional<HashMap<String, Flight>> getFilteredFlights(String destinationPlace,
-                                                                LocalDateTime departureDateTime,
-                                                                int freeSeats) {
-        return flightsService.getFilteredFlights(destinationPlace, departureDateTime, freeSeats);
+    public Optional<List<FlightRoute>> getFilteredFlights(String departurePlace,
+                                                          String destinationPlace,
+                                                          LocalDateTime departureDateTime,
+                                                          int freeSeats) {
+        return flightsService.getFilteredFlights(departurePlace, destinationPlace,
+                                                 departureDateTime, freeSeats);
     }
 
     @Override
@@ -34,22 +38,22 @@ public class FlightsController implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Optional<HashMap<String, Flight>> getFlightsForNext24Hours(LocalDateTime now) {
+    public Optional<List<Flight>> getFlightsForNext24Hours(LocalDateTime now) {
         return flightsService.getFlightsForNext24Hours(now);
     }
 
     @Override
-    public void applyReservation4Flight(String idOfFlight, int numbOfSeats) {
-        flightsService.applyReservation4Flight(idOfFlight, numbOfSeats);
+    public void applySeatsReserve4Booking(Booking booking) {
+        flightsService.applySeatsReserve4Booking(booking);
     }
 
     @Override
-    public void cancelReservation4Flight(String idOfFlight, int numbOfSeats) {
-        flightsService.cancelReservation4Flight(idOfFlight, numbOfSeats);
+    public void cancelSeatsReserve4Booking(Booking booking) {
+        flightsService.cancelSeatsReserve4Booking(booking);
     }
 
     @Override
-    public void printFlightsToConsole(Optional<HashMap<String, Flight>> flightsOptional) {
+    public void printFlightsToConsole(Optional<List<Flight>> flightsOptional) {
         flightsService.printFlightsToConsole(flightsOptional);
     }
 
@@ -78,10 +82,10 @@ public class FlightsController implements FlightsDAO, CanWorkWithFileSystem {
         return new ArrayList<Flight>(filteredFlights);
     }
 
-    public void printIndexedList(List<Flight> flights) {
+    public void printIndexedList(List<FlightRoute> flightRoutes) {
         int counter = 1;
-        for (Flight f : flights) {
-            String outputStr = counter + ". " + f.prettyFormat();
+        for (FlightRoute flightRoute : flightRoutes) {
+            String outputStr = "<<< " + counter + " >>>\n" + flightRoute.prettyFormat();
             System.out.println(outputStr);
             counter++;
         }

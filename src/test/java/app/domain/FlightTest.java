@@ -1,5 +1,6 @@
 package app.domain;
 
+import app.service.flightsGenerator.ShortFlightData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,23 +22,25 @@ class FlightTest {
 
     @BeforeEach
     void setUp() {
-        String departureCity1 = "Киев";
-        String destinationPlace1 = "Амстердам";
+        ShortFlightData flightData1 = new ShortFlightData(
+                "Киев", "KBP",
+                "Амстердам", "AMS", 185);
         long departureTime1 = strToDateTimeInMillis("17/01/2021-02:00");
         long arrivalTime1 = strToDateTimeInMillis("17/01/2021-05:05");
         String idOfFlight1 = "FL649K";
         int numbOfSeats1 = 36;
-        testFlight1 = new Flight(departureCity1, destinationPlace1, idOfFlight1,
+        testFlight1 = new Flight(flightData1, idOfFlight1,
                                  departureTime1, arrivalTime1, numbOfSeats1);
 //        ----------------------------------------------------------------
 
-        String departureCity2 = "Киев";
-        String destinationPlace2 = "Дюссельдорф";
+        ShortFlightData flightData2 = new ShortFlightData(
+                "Киев", "KBP",
+                "Дюссельдорф", "DUS", 200);
         long departureTime2 = strToDateTimeInMillis("15/01/2021-19:40");
         long arrivalTime2 = strToDateTimeInMillis("15/01/2021-23:00");
         String idOfFlight2 = "FL448P";
         int numbOfSeats2 = 49;
-        testFlight2 = new Flight(departureCity2, destinationPlace2, idOfFlight2,
+        testFlight2 = new Flight(flightData2, idOfFlight2,
                                  departureTime2, arrivalTime2, numbOfSeats2);
     }
 
@@ -196,13 +199,13 @@ class FlightTest {
     @Test
     void prettyFormat() {
         System.out.println(">>> Running TEST of method prettyFormat(), class Flight.");
-        String expectedOutput1 = "Номер рейса: FL649K  |  Пункт назначения: Амстердам        |" +
-                "  Время вылета: 17/01/2021-02:00  |  Время прибытия: 17/01/2021-05:05  |" +
-                "  Количество свободных мест: 36  |";
+        String expectedOutput1 = "Номер рейса: FL649K  |  ОТКУДА: Киев,KBP               |  КУДА:" +
+                " Амстердам,AMS          |  Вылет: 17/01/2021-02:00  |  Прибытие: 17/01/2021-05:05" +
+                "  |  Свободные места:36  |";
 
-        String expectedOutput2 = "Номер рейса: FL448P  |  Пункт назначения: Дюссельдорф      |" +
-                "  Время вылета: 15/01/2021-19:40  |  Время прибытия: 15/01/2021-23:00  |" +
-                "  Количество свободных мест: 49  |";
+        String expectedOutput2 = "Номер рейса: FL448P  |  ОТКУДА: Киев,KBP               |  КУДА:" +
+                " Дюссельдорф,DUS        |  Вылет: 15/01/2021-19:40  |  Прибытие: 15/01/2021-23:00  " +
+                "|  Свободные места:49  |";
 
         // When
         String actualOutput1 = testFlight1.prettyFormat();

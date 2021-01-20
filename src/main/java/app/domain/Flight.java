@@ -1,5 +1,7 @@
 package app.domain;
 
+import app.service.flightsGenerator.ShortFlightData;
+
 import java.io.Serializable;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -7,17 +9,23 @@ import java.util.Objects;
 import java.util.TimeZone;
 
 public class Flight implements Serializable {
-    private String departurePlace; // в нашем случае это всегда будет город Киев
+    private String departurePlace;
+    private String codeOfDepartureAPT;
     private String destinationPlace;
+    private String codeOfDestinationAPT;
     private String idOfFlight;
     private long departureTime;
     private long arrivalTime;
     private int numberOfFreeSeats;
 
-    public Flight(String departurePlace, String destinationPlace, String idOfFlight,
+
+    public Flight(ShortFlightData flightData, String idOfFlight,
                   long departureTime, long arrivalTime, int numberOfFreeSeats) {
-        this.departurePlace = departurePlace;
-        this.destinationPlace = destinationPlace;
+        this.departurePlace = flightData.getDeparturePlace();
+        this.codeOfDepartureAPT = flightData.getCodeOfDepartureAPT();
+        this.destinationPlace = flightData.getDestinationPlace();
+        this.codeOfDestinationAPT = flightData.getCodeOfDestinationAPT();
+
         this.idOfFlight = idOfFlight;
         this.departureTime = departureTime; // Unix Millis Timestamp
         this.arrivalTime = arrivalTime;     // Unix Millis Timestamp
@@ -41,6 +49,14 @@ public class Flight implements Serializable {
 
     public String getDestinationPlace() {
         return destinationPlace;
+    }
+
+    public String getCodeOfDepartureAPT() {
+        return codeOfDepartureAPT;
+    }
+
+    public String getCodeOfDestinationAPT() {
+        return codeOfDestinationAPT;
     }
 
     public String getIdOfFlight() {
@@ -102,19 +118,25 @@ public class Flight implements Serializable {
     }
 
     public String prettyFormat() {
-        String spaces = generateSpaces(destinationPlace);
+        String departurePlaceInclAPT =
+                departurePlace + "," + codeOfDepartureAPT;
+        String destinationPlaceInclAPT =
+                destinationPlace + "," + codeOfDestinationAPT;
+
+        String spacesDeparture = generateSpaces(departurePlaceInclAPT);
+        String spacesDestination = generateSpaces(destinationPlaceInclAPT);
 
         return
                 "Номер рейса: " + idOfFlight + "  |  " +
-                        "Пункт назначения: " + destinationPlace + spaces +
-                        "|  " +
-                        "Время вылета: " + getPrettyFormattedDate(departureTime) + "  |  " +
-                        "Время прибытия: " + getPrettyFormattedDate(arrivalTime) + "  |  " +
-                        "Количество свободных мест: " + formatFreeSeats(numberOfFreeSeats) + "  |";
+                        "ОТКУДА: " + departurePlaceInclAPT + spacesDeparture + "|  " +
+                        "КУДА: " + destinationPlaceInclAPT + spacesDestination + "|  " +
+                        "Вылет: " + getPrettyFormattedDate(departureTime) + "  |  " +
+                        "Прибытие: " + getPrettyFormattedDate(arrivalTime) + "  |  " +
+                        "Свободные места:" + formatFreeSeats(numberOfFreeSeats) + "  |";
     }
 
     private static String generateSpaces(String cityName) {
-        int numbOfSpaces = 18 - cityName.length();
+        int numbOfSpaces = 24 - cityName.length();
         String spaces = "";
         for (int i = 1; i < numbOfSpaces; i++) spaces += " ";
         return spaces;
