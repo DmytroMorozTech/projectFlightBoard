@@ -10,7 +10,6 @@ import app.exceptions.UsersOverflowException;
 import app.service.flightsGenerator.FlightsGenerator;
 import app.service.loggerService.LoggerService;
 
-import javax.swing.text.html.Option;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -45,9 +44,9 @@ public class Console {
                     "СЕРВИС БРОНИРОВАНИЯ АВИАБИЛЕТОВ:\n" +
                     "1.\tОтобразить онлайн-табло.\n" +
                     "2.\tПосмотреть информацию о рейсе\n" +
-                    "3.\tПоиск и бронирование рейса\n" +
+                    "3.\tПоиск и бронирование рейсов\n" +
                     "4.\tОтменить бронирование\n" +
-                    "5.\tМои рейсы\n" +
+                    "5.\tМои маршруты\n" +
                     "6.\tСохранить внесенные изменения\n" +
                     "7.\tЗавершить сессию\n" +
                     "8.\tЗавершить работу программы\n" +
@@ -120,22 +119,25 @@ public class Console {
         });
 
         mainMenuCommands.put("3", () -> {
-            System.out.println("<<< Вы выбрали команду №3 - ПОИСК И БРОНИРОВАНИЕ РЕЙСА >>>");
-            Optional<List<FlightRoute>> foundFlightsOptional = findFlights();
-            if (foundFlightsOptional.isEmpty() | foundFlightsOptional.get().size()==0) {
+            System.out.println("<<< Вы выбрали команду №3 - ПОИСК И БРОНИРОВАНИЕ РЕЙСОВ >>>");
+            Optional<List<FlightRoute>> foundFlightRoutes = findFlightRoutes();
+            if (foundFlightRoutes.isEmpty() | foundFlightRoutes.get().size()==0) {
                 System.out.println("По заданным критериям НЕ БЫЛО НАЙДЕНО РЕЙСОВ.");
                 return null;
             }
-            List<FlightRoute> foundFlightsList = foundFlightsOptional.get();
+            List<FlightRoute> foundFlightsList = foundFlightRoutes.get();
             flightsController.printIndexedList(foundFlightsList);
-//          Все найденные рейсы здесь выводятся на экран.
+//          Все найденные маршруты здесь выводятся на экран.
+//          Маршрут отличается от рейса тем, что маршрут может состоять из нескольких рейсов. То
+//          есть мы учитываем, что при построении маршрута из точки А в точку В у нас может быть
+//          пересадка в точке С.
             flightsConsideredAtTheMoment = foundFlightsList;
 
             String bookingMenuCommandsStr =
                     "\n\n" +
                             "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" +
                             "Дальнейшие действия:\n" +
-                            "1.\tВыбрать рейс для бронирования.\n" +
+                            "1.\tВыбрать маршрут для бронирования.\n" +
                             "2.\tВернуться в предыдущее меню.\n" +
                             "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
             System.out.println(bookingMenuCommandsStr);
@@ -157,7 +159,7 @@ public class Console {
         });
 
         mainMenuCommands.put("5", () -> {
-            System.out.println("<<< Вы выбрали команду №5 - МОИ РЕЙСЫ >>>");
+            System.out.println("<<< Вы выбрали команду №5 - МОИ МАРШРУТЫ >>>");
             User activeUser = usersController.getActiveUser();
             Optional<HashMap<String, Booking>> allBookingsOfActiveUser =
                     bookingsController.getAllUserBookings(activeUser.getLogin(), activeUser.getName(),
@@ -224,9 +226,8 @@ public class Console {
         bookingMenuCommands = new HashMap<>();
 
         bookingMenuCommands.put("1", () -> {
-            System.out.println("<<< Вы выбрали команду №1 - Забронировать билеты на рейс/маршрут " +
-                                       "по его " +
-                                       "порядковому номеру в списке>>>");
+            System.out.println("<<< Вы выбрали команду №1 - Забронировать билеты на маршрут " +
+                                       "по его порядковому номеру в списке>>>");
             createBooking();
             return null;
         });
@@ -295,7 +296,7 @@ public class Console {
         }
     }
 
-    private static Optional<List<FlightRoute>> findFlights() {
+    private static Optional<List<FlightRoute>> findFlightRoutes() {
         String departurePlace = readCityName("Введите начальную точку Вашего маршрута (название " +
                                                    "города): ");
         String destinationPlace = readCityName("Введите пункт Вашего назначения(название города): ");
@@ -309,7 +310,9 @@ public class Console {
         Optional<List<FlightRoute>> filteredFlights =
                 flightsController.getFilteredFlights(departurePlace, destinationPlace,
                                                      localDateTime, numbOfRequestedSeats);
-//        Здесь мы находим все рейсы по критериям поиска, заданным пользователем.
+//        Здесь мы находим все маршруты по критериям поиска, заданным пользователем. Это могут
+//        быть как маршруты с прямыми рейсами, так и маршруты, состоящие из нескольких рейсов (с
+//        пересадками).
 
         return filteredFlights;
     }

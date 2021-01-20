@@ -82,7 +82,7 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy-HH:mm");
         String formattedDateTime = dtf.format(currentDateTime);
 
-        System.out.println("<<< АЭРОПОРТ, ГОРОД КИЕВ >>>");
+        System.out.println("ТЕКУЩЕЕ ВРЕМЯ:");
         System.out.println(formattedDateTime);
         System.out.println("*************************************************************");
 

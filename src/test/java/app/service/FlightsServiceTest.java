@@ -233,7 +233,7 @@ class FlightsServiceTest {
         // поскольку в выводе метода printFlightsToConsole присутствуют поточные дата и время
         // (на момент выполнения метода), то мы вынуждены здесь обрезать эту текстовую часть,
         // чтобы иметь возможность сравнивать оставшуюся часть текста.
-        String cleanOutputFinal = cleanOutput.substring(105);
+        String cleanOutputFinal = cleanOutput.substring(91);
 
         // Then
         Assertions.assertEquals(expectedOutput, cleanOutputFinal);
