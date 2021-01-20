@@ -1,6 +1,7 @@
 package app.service;
 
 import app.domain.Flight;
+import app.domain.FlightRoute;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +14,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -62,7 +65,7 @@ class FlightsServiceTest {
         System.out.println(">>> Running TEST of method getAllFlights(), class FlightsService.");
         // Given
         HashMap<String, Flight> allFlights;
-        int expectedNumbOfFlights = 500;
+        int expectedNumbOfFlights = 2000;
 
         // When
         allFlights = service.getAllFlights();
@@ -76,24 +79,24 @@ class FlightsServiceTest {
     void getFilteredFlights() {
         System.out.println(">>> Running TEST of method getFilteredFlights(), class FlightsService.");
         // Given
-        LocalDateTime departureTime1 = strToLocalDateTime("17/01/2021-03:00");
-        LocalDateTime departureTime2 = strToLocalDateTime("10/01/2021-00:00");
-        LocalDateTime departureTime3 = strToLocalDateTime("13/01/2021-03:20");
-        int expectedNumbOfFilteredFl1 = 1;
-        int expectedNumbOfFilteredFl2 = 2;
-        int expectedNumbOfFilteredFl3 = 1;
+        LocalDateTime departureTime1 = strToLocalDateTime("20/01/2021-17:30");
+        LocalDateTime departureTime2 = strToLocalDateTime("21/01/2021-17:30");
+        LocalDateTime departureTime3 = strToLocalDateTime("22/01/2021-10:00");
+        int expectedNumbOfFilteredFl1 = 28;
+        int expectedNumbOfFilteredFl2 = 4;
+        int expectedNumbOfFilteredFl3 = 3;
 
         // When
-        Optional<HashMap<String, Flight>> filteredFlights1 = service.getFilteredFlights(
-                "Дюссельдорф", departureTime1, 5);
+        Optional<List<FlightRoute>> filteredFlights1 =
+                service.getFilteredFlights("Киев", "Нью-Йорк", departureTime1, 2);
         int actualNumbOfFilteredFl1 = filteredFlights1.get().size();
 //        -------------------------------------------------------------
-        Optional<HashMap<String, Flight>> filteredFlights2 = service.getFilteredFlights(
-                "Эссен", departureTime2, 2);
+        Optional<List<FlightRoute>> filteredFlights2 = service.getFilteredFlights("Киев",
+                                                                                  "Стамбул", departureTime2, 2);
         int actualNumbOfFilteredFl2 = filteredFlights2.get().size();
 //        -------------------------------------------------------------
-        Optional<HashMap<String, Flight>> filteredFlights3 = service.getFilteredFlights(
-                "Милан", departureTime3, 40);
+        Optional<List<FlightRoute>> filteredFlights3 = service.getFilteredFlights("Стамбул",
+                                                                                  "Нью-Йорк", departureTime3, 2);
         int actualNumbOfFilteredFl3 = filteredFlights3.get().size();
 
         //Then
@@ -106,11 +109,11 @@ class FlightsServiceTest {
     void getFlightById() {
         System.out.println(">>> Running TEST of method getFlightById(), class FlightsService.");
         //Given
-        String expectedDestination1 = "Ереван";
-        int expectedNumbOfFreeSeats1 = 3;
+        String expectedDestination1 = "Нью-Йорк";
+        int expectedNumbOfFreeSeats1 = 18;
 
         // When
-        Flight flight1 = service.getFlightById("FL993D");
+        Flight flight1 = service.getFlightById("FL723L");
         String actualDestination1 = flight1.getDestinationPlace();
         int actualNumbOfFreeSeats1 = flight1.getNumberOfFreeSeats();
 
@@ -120,11 +123,11 @@ class FlightsServiceTest {
 
 //        --------------------------------------------------------------
         //Given
-        String expectedDestination2 = "Ивано-Франковск";
+        String expectedDestination2 = "Мадрид";
         int expectedNumbOfFreeSeats2 = 9;
 
         // When
-        Flight flight2 = service.getFlightById("FL389Z");
+        Flight flight2 = service.getFlightById("FL217K");
         String actualDestination2 = flight2.getDestinationPlace();
         int actualNumbOfFreeSeats2 = flight2.getNumberOfFreeSeats();
 
@@ -138,8 +141,8 @@ class FlightsServiceTest {
         System.out.println(">>> Running TEST of method getFlightsForNext24Hours(), class FlightsService.");
         // Given
         LocalDateTime startingDateTime1 = strToLocalDateTime("15/01/2021-00:00");
-        HashMap<String, Flight> flights4Next24Hours1;
-        int expectedNumbOfFlights1 = 22;
+        List<Flight> flights4Next24Hours1;
+        int expectedNumbOfFlights1 = 96;
 
         // When
         flights4Next24Hours1 = service.getFlightsForNext24Hours(startingDateTime1).get();
@@ -149,9 +152,9 @@ class FlightsServiceTest {
         assertEquals(expectedNumbOfFlights1, actualNumbOfFlights1);
 //        ---------------------------------------------------------------------
         // Given
-        LocalDateTime startingDateTime2 = strToLocalDateTime("13/01/2021-00:00");
-        HashMap<String, Flight> flights4Next24Hours2;
-        int expectedNumbOfFlights2 = 29;
+        LocalDateTime startingDateTime2 = strToLocalDateTime("17/01/2021-15:20");
+        List<Flight> flights4Next24Hours2;
+        int expectedNumbOfFlights2 = 73;
 
         // When
         flights4Next24Hours2 = service.getFlightsForNext24Hours(startingDateTime2).get();
@@ -165,7 +168,7 @@ class FlightsServiceTest {
     void applyReservation4Flight() {
         System.out.println(">>> Running TEST of method applyReservation4Flight(), class FlightsService.");
         // Given
-        Flight flight = service.getFlightById("FL884P");
+        Flight flight = service.getFlightById("FL693D");
         int initialNumbOfFreeSeats = flight.getNumberOfFreeSeats();
 
         // When
@@ -173,14 +176,13 @@ class FlightsServiceTest {
 
         // Then
         assertEquals(initialNumbOfFreeSeats - 4, flight.getNumberOfFreeSeats());
-
     }
 
     @Test
     void cancelReservation4Flight() {
         System.out.println(">>> Running TEST of method cancelReservation4Flight(), class FlightsService.");
         // Given
-        Flight flight = service.getFlightById("FL349J");
+        Flight flight = service.getFlightById("FL379W");
         int initialNumbOfFreeSeats = flight.getNumberOfFreeSeats();
 
         // When
@@ -193,20 +195,32 @@ class FlightsServiceTest {
     @Test
     void printFlightsToConsole() {
         //Given
-        LocalDateTime departureTime = strToLocalDateTime("17/01/2021-03:00");
-        String expectedOutput = "<<< АЭРОПОРТ, ГОРОД КИЕВ >>>16/01/2021-20:27*********************" +
-                "****************************************Номер рейса: FL891R  |" +
-                "  Пункт назначения: Анкара           |  Время вылета: 17/01/2021-03:50  |" +
-                "  Время прибытия: 17/01/2021-05:55  |  Количество свободных мест: 35  |" +
-                "Номер рейса: FL438D  |  Пункт назначения: Анкара           |" +
-                "  Время вылета: 17/01/2021-05:30  |  Время прибытия: 17/01/2021-07:35  |" +
-                "  Количество свободных мест: 07  |";
+        LocalDateTime minDepartureTime = strToLocalDateTime("22/01/2021-10:00");
+        LocalDateTime maxDepartureTime = strToLocalDateTime("22/01/2021-11:00");
+        long maxDepartureTimeInMillis =
+                maxDepartureTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-        Optional<HashMap<String, Flight>> filteredFlights = service.getFilteredFlights(
-                "Анкара", departureTime, 5);
+        String expectedOutput = "Номер рейса: FL662B  |  ОТКУДА: Франкфурт-на-Майне,FRA |  КУДА: " +
+                "Мадрид,MAD             |  Вылет: 22/01/2021-10:10  |  Прибытие: 22/01/2021-12:45" +
+                "  |  Свободные места:22  |Номер рейса: FL378W  |  ОТКУДА: Киев,KBP               " +
+                "|  КУДА: Лондон,LCY             |  Вылет: 22/01/2021-10:30  " +
+                "|  Прибытие: 22/01/2021-14:00" +
+                "  |  Свободные места:04  |Номер рейса: FL819Z  |  ОТКУДА: Нью-Йорк,JFK" +
+                "           |  КУДА: Амстердам,AMS          |  Вылет: 22/01/2021-10:30  |" +
+                "  Прибытие: 22/01/2021-17:30  |  Свободные места:12  |Номер рейса: FL688F  |" +
+                "  ОТКУДА: Стамбул,IST            |  КУДА: Киев,KBP               |" +
+                "  Вылет: 22/01/2021-10:40  |  Прибытие: 22/01/2021-12:55  |  Свободные места:03  |";
 
+        Optional<List<Flight>> filteredFlights =
+                service.getFlightsForNext24Hours(minDepartureTime);
+
+        List<Flight> severalFilteredFlights =
+                filteredFlights.get()
+                               .stream()
+                               .filter(f -> f.getDepartureTime() < maxDepartureTimeInMillis)
+                               .collect(Collectors.toList());
         // When
-        service.printFlightsToConsole(filteredFlights);
+        service.printFlightsToConsole(Optional.of(severalFilteredFlights));
 
         final String cleanOutput =
                 outputStreamCaptor
@@ -219,11 +233,10 @@ class FlightsServiceTest {
         // поскольку в выводе метода printFlightsToConsole присутствуют поточные дата и время
         // (на момент выполнения метода), то мы вынуждены здесь обрезать эту текстовую часть,
         // чтобы иметь возможность сравнивать оставшуюся часть текста.
-        String cleanOutputFinal = cleanOutput.substring(50);
-        String expectedOutputFinal = expectedOutput.substring(50);
+        String cleanOutputFinal = cleanOutput.substring(105);
 
         // Then
-        Assertions.assertEquals(expectedOutputFinal, cleanOutputFinal);
+        Assertions.assertEquals(expectedOutput, cleanOutputFinal);
     }
 
     @Test

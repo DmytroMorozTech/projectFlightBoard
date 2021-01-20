@@ -2,13 +2,16 @@ package app.service;
 
 import app.contract.CanWorkWithFileSystem;
 import app.contract.FlightsDAO;
+import app.domain.Booking;
 import app.domain.Flight;
+import app.domain.FlightRoute;
 import app.exceptions.FlightOverflowException;
 import app.repos.CollectionFlightsDAO;
 import app.service.loggerService.LoggerService;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 public class FlightsService implements FlightsDAO, CanWorkWithFileSystem {
@@ -25,11 +28,13 @@ public class FlightsService implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Optional<HashMap<String, Flight>> getFilteredFlights(String destinationPlace,
-                                                                LocalDateTime departureDateTime,
-                                                                int freeSeats) {
+    public Optional<List<FlightRoute>> getFilteredFlights(String departurePlace,
+                                                          String destinationPlace,
+                                                          LocalDateTime departureDateTime,
+                                                          int freeSeats) {
         LoggerService.info("Поиск рейсов по заданным критериям.");
-        return flightsDAO.getFilteredFlights(destinationPlace, departureDateTime, freeSeats);
+        return flightsDAO.getFilteredFlights(departurePlace, destinationPlace, departureDateTime,
+                                             freeSeats);
     }
 
     @Override
@@ -39,25 +44,25 @@ public class FlightsService implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Optional<HashMap<String, Flight>> getFlightsForNext24Hours(LocalDateTime now) {
+    public Optional<List<Flight>> getFlightsForNext24Hours(LocalDateTime now) {
         LoggerService.info("Формирование списка рейсов на ближайшие 24 часа");
         return flightsDAO.getFlightsForNext24Hours(now);
     }
 
     @Override
-    public void applyReservation4Flight(String idOfFlight, int numbOfSeats) {
-        flightsDAO.applyReservation4Flight(idOfFlight,numbOfSeats);
+    public void applySeatsReserve4Booking(Booking booking) {
+        flightsDAO.applySeatsReserve4Booking(booking);
         LoggerService.info("Резервирование мест на рейсе в связи с оформлением брони");
     }
 
     @Override
-    public void cancelReservation4Flight(String idOfFlight, int numbOfSeats) {
-        flightsDAO.cancelReservation4Flight(idOfFlight,numbOfSeats);
+    public void cancelSeatsReserve4Booking(Booking booking) {
+        flightsDAO.cancelSeatsReserve4Booking(booking);
         LoggerService.info("Освобождение мест на рейсе в связи с отменой брони.");
     }
 
     @Override
-    public void printFlightsToConsole(Optional<HashMap<String, Flight>> flightsOptional) {
+    public void printFlightsToConsole(Optional<List<Flight>> flightsOptional) {
         flightsDAO.printFlightsToConsole(flightsOptional);
         LoggerService.info("Вывод данных о полетах в консоль приложения.");
     }
@@ -81,13 +86,14 @@ public class FlightsService implements FlightsDAO, CanWorkWithFileSystem {
     public boolean saveDataToFile() {
         try {
             return flightsDAO.saveDataToFile();
-        } catch (FlightOverflowException ex) {
+        }
+        catch (FlightOverflowException ex) {
             LoggerService.error("FlightOverflowException: " + ex.getMessage());
             return false;
         }
     }
 
-    public void loadDataForTesting(){
+    public void loadDataForTesting() {
         try {
             flightsDAO.loadDataForTesting();
         }

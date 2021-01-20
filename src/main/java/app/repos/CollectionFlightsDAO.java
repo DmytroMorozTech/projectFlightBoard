@@ -2,7 +2,9 @@ package app.repos;
 
 import app.contract.CanWorkWithFileSystem;
 import app.contract.FlightsDAO;
+import app.domain.Booking;
 import app.domain.Flight;
+import app.domain.FlightRoute;
 import app.exceptions.FlightOverflowException;
 import app.service.fileSystemService.FileSystemService;
 import app.service.loggerService.LoggerService;
@@ -28,24 +30,89 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Optional<HashMap<String, Flight>> getFilteredFlights(String destinationPlace,
-                                                                LocalDateTime departureDateTime, int freeSeats) {
+    public Optional<List<FlightRoute>> getFilteredFlights(String departurePlace,
+                                                          String destinationPlace,
+                                                          LocalDateTime departureDateTime, int freeSeats) {
+
+        List<FlightRoute> filteredFlightRoutes = new ArrayList<>();
 
         long departureDtZoned = convertLocalDtToZonedDt(departureDateTime);
         long departureDtZonedPlus24H = convertLocalDtToZonedDt(departureDateTime.plusHours(24));
+        long departureDtZonedPlus36H = convertLocalDtToZonedDt(departureDateTime.plusHours(36));
 
-        Map<String, Flight> filteredMap =
-                flights.entrySet().stream()   //Stream<Map.Entry<String, Flight>>
-                       .filter(f -> f.getValue().getDestinationPlace().equals(destinationPlace)
-                               && f.getValue().getDepartureTime() > departureDtZoned
-                               && f.getValue().getDepartureTime() < departureDtZonedPlus24H
-                               && f.getValue().getNumberOfFreeSeats() >= freeSeats)
-                       .collect(Collectors.toMap(
-                               f -> f.getKey(),
-                               f -> f.getValue()
-                       ));
-        HashMap<String, Flight> filteredHashMap = (HashMap<String, Flight>) filteredMap;
-        return Optional.ofNullable(filteredHashMap);
+        flights
+                .entrySet()
+                .stream()
+                .map(f -> f.getValue())
+                .filter(f -> f.getDeparturePlace().equals(departurePlace)
+                        && f.getDestinationPlace().equals(destinationPlace)
+                        && f.getDepartureTime() > departureDtZoned
+                        && f.getDepartureTime() < departureDtZonedPlus24H
+                        && f.getNumberOfFreeSeats() >= freeSeats)
+                .forEach(f -> filteredFlightRoutes.add(new FlightRoute(f)));
+
+        // Здесь мы нашли все прямые рейсы по запрошенным критериям поиска и добавили их
+        // в качестве маршрутов(FlightRoute) в List<FlightRoute>. Туда же мы будем ниже добавлять
+        // все найденные стыковочные маршруты.
+//        ------------------------------------------------------------------------------------
+        List<Flight> potentialDepartureFlights =
+                flights
+                        .entrySet()
+                        .stream()
+                        .map(f -> f.getValue())
+                        .filter(f -> f.getDeparturePlace().equals(departurePlace)
+                                && f.getDepartureTime() > departureDtZoned
+                                && f.getDepartureTime() < departureDtZonedPlus24H
+                                && f.getNumberOfFreeSeats() >= freeSeats)
+                        .collect(Collectors.toList());
+        // здесь мы сначала находим все рейсы, которые вылетают из указанного пункта отправления
+        // в ближайшие 24 часа.
+
+        Set<String> codesOfConnectingAPTs =
+                potentialDepartureFlights
+                        .stream()
+                        .map(Flight::getCodeOfDestinationAPT)
+                        .collect(Collectors.toSet());
+        // - затем составляем набор уникальных кодов IATA (IATA - International Air Transport
+        // Association), идентифицирующих аэропорт пункта назначения по найденным рейсам (например,
+        // для Дюссельдорфа это "DUS", для аэропорта Борисполь - "KBP");
+
+        List<Flight> potentialConnectingFlights =
+                flights
+                        .entrySet()
+                        .stream()
+                        .map(f -> f.getValue())
+                        .filter(f -> f.getDestinationPlace().equals(destinationPlace)
+                                && f.getDepartureTime() > departureDtZoned
+                                && f.getDepartureTime() < departureDtZonedPlus36H
+                                && f.getNumberOfFreeSeats() >= freeSeats)
+                        .filter(f -> codesOfConnectingAPTs.contains(f.getCodeOfDepartureAPT()))
+                        .collect(Collectors.toList());
+
+        for (Flight f1 : potentialDepartureFlights) {
+            for (Flight f2 : potentialConnectingFlights) {
+                String f1DestinationAPT = f1.getCodeOfDestinationAPT();
+                String f2DepartureAPT = f2.getCodeOfDepartureAPT();
+                long numberOfMillisIn12H = 1000 * 60 * 60 * 12;
+                boolean f2IsAfterF1 = f2.getDepartureTime() > f1.getArrivalTime();
+                boolean waitingTimeIsLessThan12H =
+                        (f2.getDepartureTime() - f1.getArrivalTime()) < numberOfMillisIn12H;
+
+                if (f1DestinationAPT.equals(f2DepartureAPT) && f2IsAfterF1 && waitingTimeIsLessThan12H) {
+                    FlightRoute flightRoute = new FlightRoute(f1, f2);
+                    filteredFlightRoutes.add(flightRoute);
+                }
+            }
+        }
+//        ------------------------------------------------------------------------------------
+        // Все найденные прямые рейсы, а также рейсы с пересадками, мы сортируем по возрастанию
+        // даты вылета.
+        List<FlightRoute> filteredFlightRoutesSorted = filteredFlightRoutes
+                .stream()
+                .sorted(Comparator.comparing(fr -> fr.getFlight1().getDepartureTime()))
+                .collect(Collectors.toList());
+
+        return Optional.ofNullable(filteredFlightRoutesSorted);
     }
 
     @Override
@@ -54,32 +121,49 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Optional<HashMap<String, Flight>> getFlightsForNext24Hours(LocalDateTime now) {
+    public Optional<List<Flight>> getFlightsForNext24Hours(LocalDateTime now) {
         long currentTimeZoned = convertLocalDtToZonedDt(now);
         long currentTimePlus24hZoned = convertLocalDtToZonedDt(now.plusHours(24));
 
-        Map<String, Flight> filteredMap =
-                flights.entrySet().stream()   //Stream<Map.Entry<String,Flight>>
-                       .filter(f -> f.getValue().getDepartureTime() > currentTimeZoned
-                               && f.getValue().getDepartureTime() < currentTimePlus24hZoned)
-                       .collect(Collectors.toMap(f -> f.getKey(), f -> f.getValue()));
-        HashMap<String, Flight> filteredHashMap = (HashMap<String, Flight>) filteredMap;
-
-        return Optional.of(filteredHashMap);
+        List<Flight> listOfFilteredFlights = flights
+                .entrySet()
+                .stream()
+                .map(f -> f.getValue())
+                .filter(f -> f.getDepartureTime() > currentTimeZoned
+                        && f.getDepartureTime() < currentTimePlus24hZoned)
+                .sorted(Comparator.comparing(f -> f.getDepartureTime()))
+                .collect(Collectors.toList());
+        return Optional.of(listOfFilteredFlights);
     }
 
     @Override
-    public void applyReservation4Flight(String idOfFlight, int numbOfSeats) {
-        flights.get(idOfFlight).applyReservation4Flight(numbOfSeats);
+    public void applySeatsReserve4Booking(Booking b) {
+        boolean hasConnectingFlight = !b.getFlightRoute().isDirectFlight();
+        String idOfF1 = b.getFlightRoute().getFlight1().getIdOfFlight();
+        int numbOfPassengers = b.getPassengerList().size();
+        flights.get(idOfF1).applyReservation4Flight(numbOfPassengers);
+
+        if (hasConnectingFlight) {
+            String idOfF2 = b.getFlightRoute().getFlight2().getIdOfFlight();
+            flights.get(idOfF2).applyReservation4Flight(numbOfPassengers);
+        }
     }
 
     @Override
-    public void cancelReservation4Flight(String idOfFlight, int numbOfSeats) {
-        flights.get(idOfFlight).cancelReservation4Flight(numbOfSeats);
+    public void cancelSeatsReserve4Booking(Booking b) {
+        boolean hasConnectingFlight = !b.getFlightRoute().isDirectFlight();
+        String idOfF1 = b.getFlightRoute().getFlight1().getIdOfFlight();
+        int numbOfPassengers = b.getPassengerList().size();
+        flights.get(idOfF1).cancelReservation4Flight(numbOfPassengers);
+
+        if (hasConnectingFlight) {
+            String idOfF2 = b.getFlightRoute().getFlight2().getIdOfFlight();
+            flights.get(idOfF2).cancelReservation4Flight(numbOfPassengers);
+        }
     }
 
     @Override
-    public void printFlightsToConsole(Optional<HashMap<String, Flight>> flightOptional) {
+    public void printFlightsToConsole(Optional<List<Flight>> flightOptional) {
         LocalDateTime currentDateTime = LocalDateTime.now();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy-HH:mm");
         String formattedDateTime = dtf.format(currentDateTime);
@@ -91,8 +175,12 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
         if (flightOptional.isEmpty())
             System.out.println("Запрошенные рейсы не были найдены");
         else if (flightOptional.isPresent()) {
-            Collection<Flight> foundFlights = flightOptional.get().values();
-            for (Flight f : foundFlights)
+            List<Flight> foundFlights = flightOptional.get();
+            List<Flight> foundFlightsSorted = foundFlights
+                    .stream()
+                    .sorted(Comparator.comparing(f -> f.getDepartureTime()))
+                    .collect(Collectors.toList());
+            for (Flight f : foundFlightsSorted)
                 System.out.println(f.prettyFormat());
         }
     }
@@ -138,7 +226,7 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
     }
 
 
-//    ---------------------------------------------------------------------------------
+    //    ---------------------------------------------------------------------------------
     // Мы делаем перегрузку (overload) данного метода для того, чтобы была возможность при
     // тестировании FlightsService загружать данные из отдельного файла с базой данных рейсов.
     public void loadDataForTesting() throws FlightOverflowException {
