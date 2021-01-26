@@ -113,15 +113,19 @@ public class Console {
         mainMenuCommands.put("2", () -> {
             System.out.println("<<< Вы выбрали команду №2 - ПОСМОТРЕТЬ ИНФОРМАЦИЮ О РЕЙСЕ >>>");
             String idOfFlight = readFlightId("Введите номер интересующего Вас рейса (его ID):");
-            Flight f = flightsController.getFlightById(idOfFlight);
-            System.out.println(f.prettyFormat());
+            Optional<Flight> f = flightsController.getFlightById(idOfFlight);
+            if (f.isEmpty()) {
+                System.out.printf("В базе данных отсутствует информация о рейсе %s.\n", idOfFlight);
+                return null;
+            }
+            System.out.println(f.get().prettyFormat());
             return null;
         });
 
         mainMenuCommands.put("3", () -> {
             System.out.println("<<< Вы выбрали команду №3 - ПОИСК И БРОНИРОВАНИЕ РЕЙСОВ >>>");
             Optional<List<FlightRoute>> foundFlightRoutes = findFlightRoutes();
-            if (foundFlightRoutes.isEmpty() | foundFlightRoutes.get().size()==0) {
+            if (foundFlightRoutes.isEmpty() | foundFlightRoutes.get().size() == 0) {
                 System.out.println("По заданным критериям НЕ БЫЛО НАЙДЕНО РЕЙСОВ.");
                 return null;
             }
@@ -163,7 +167,7 @@ public class Console {
             User activeUser = usersController.getActiveUser();
             Optional<HashMap<String, Booking>> allBookingsOfActiveUser =
                     bookingsController.getAllUserBookings(activeUser.getLogin(), activeUser.getName(),
-                                                          activeUser.getSurname());
+                            activeUser.getSurname());
             bookingsController.printBookingsToConsole(allBookingsOfActiveUser);
             return null;
         });
@@ -227,7 +231,7 @@ public class Console {
 
         bookingMenuCommands.put("1", () -> {
             System.out.println("<<< Вы выбрали команду №1 - Забронировать билеты на маршрут " +
-                                       "по его порядковому номеру в списке>>>");
+                    "по его порядковому номеру в списке>>>");
             createBooking();
             return null;
         });
@@ -241,7 +245,7 @@ public class Console {
     public static void createBooking() {
         int maxNumbOfFlightInList = flightsConsideredAtTheMoment.size();
         int chosenItemInList = readNumber("Введите порядковый номер маршрута в данном списке:",
-                                          1, maxNumbOfFlightInList);
+                1, maxNumbOfFlightInList);
         int indexOfItemInList = chosenItemInList - 1;
         // из-за того, что нумерация отфильтрованных маршрутов на экране начинается с единицы, а
         // индексы в структуре данных ArrayList начинаются с ноля. Поэтому мы и делаем эту
@@ -249,7 +253,7 @@ public class Console {
         FlightRoute flightRoute = flightsConsideredAtTheMoment.get(indexOfItemInList);
 
         int numbOfPassengers = readNumber("Введите количество пассажиров, для которых Вы " +
-                                                  "хотите приобрести билеты:", 1, 10);
+                "хотите приобрести билеты:", 1, 10);
         List<Passenger> passengerList =
                 bookingsController.getPassengersDataFromUser(numbOfPassengers);
         String activeUserLogin = usersController.getActiveUser().getLogin();
@@ -289,7 +293,7 @@ public class Console {
         if (successfulRegistration) {
             System.out.println("Регистрация прошла успешно.");
             System.out.println("Теперь Вам нужно войти в систему, используя ЛОГИН и ПАРОЛЬ, " +
-                                       "указанные при регистрации.");
+                    "указанные при регистрации.");
         } else {
             System.out.println("Произошла ошибка при регистрации нового пользователя.");
             System.out.println("Попробуйте повторить процедуру.");
@@ -298,18 +302,18 @@ public class Console {
 
     private static Optional<List<FlightRoute>> findFlightRoutes() {
         String departurePlace = readCityName("Введите начальную точку Вашего маршрута (название " +
-                                                   "города): ");
+                "города): ");
         String destinationPlace = readCityName("Введите пункт Вашего назначения(название города): ");
         long dateAndTime = readDate("Введите дату и время желаемого вылета в " +
-                                            "формате в формате dd/MM/yyyy-HH:mm:");
+                "формате в формате dd/MM/yyyy-HH:mm:");
         int numbOfRequestedSeats = readNumber("Введите количество посадочных " +
-                                                      "мест, которые Вы хотели бы " +
-                                                      "забронировать: ", 1, 10);
+                "мест, которые Вы хотели бы " +
+                "забронировать: ", 1, 10);
         LocalDateTime localDateTime = convertFromUnixMillisToLocalDateT(dateAndTime);
 
         Optional<List<FlightRoute>> filteredFlights =
                 flightsController.getFilteredFlights(departurePlace, destinationPlace,
-                                                     localDateTime, numbOfRequestedSeats);
+                        localDateTime, numbOfRequestedSeats);
 //        Здесь мы находим все маршруты по критериям поиска, заданным пользователем. Это могут
 //        быть как маршруты с прямыми рейсами, так и маршруты, состоящие из нескольких рейсов (с
 //        пересадками).

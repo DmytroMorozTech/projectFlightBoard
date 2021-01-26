@@ -18,7 +18,7 @@ public interface FlightsDAO {
                                                    LocalDateTime departureDateTime,
                                                    int freeSeats);
 
-    Flight getFlightById(String idOfFlight);
+    Optional<Flight> getFlightById(String idOfFlight);
 
     Optional<List<Flight>> getFlightsForNext24Hours(LocalDateTime now);
 

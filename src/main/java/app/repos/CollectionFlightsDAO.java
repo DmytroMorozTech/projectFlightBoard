@@ -116,8 +116,8 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Flight getFlightById(String idOfFlight) {
-        return flights.get(idOfFlight);
+    public Optional<Flight> getFlightById(String idOfFlight) {
+        return Optional.ofNullable(flights.get(idOfFlight));
     }
 
     @Override

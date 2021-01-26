@@ -38,7 +38,7 @@ public class FlightsService implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Flight getFlightById(String idOfFlight) {
+    public Optional<Flight> getFlightById(String idOfFlight) {
         LoggerService.info("Поиск рейса по его номеру(ID).");
         return flightsDAO.getFlightById(idOfFlight);
     }
