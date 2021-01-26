@@ -113,7 +113,7 @@ class FlightsServiceTest {
         int expectedNumbOfFreeSeats1 = 18;
 
         // When
-        Flight flight1 = service.getFlightById("FL723L");
+        Flight flight1 = service.getFlightById("FL723L").get();
         String actualDestination1 = flight1.getDestinationPlace();
         int actualNumbOfFreeSeats1 = flight1.getNumberOfFreeSeats();
 
@@ -127,7 +127,7 @@ class FlightsServiceTest {
         int expectedNumbOfFreeSeats2 = 9;
 
         // When
-        Flight flight2 = service.getFlightById("FL217K");
+        Flight flight2 = service.getFlightById("FL217K").get();
         String actualDestination2 = flight2.getDestinationPlace();
         int actualNumbOfFreeSeats2 = flight2.getNumberOfFreeSeats();
 
@@ -168,7 +168,7 @@ class FlightsServiceTest {
     void applyReservation4Flight() {
         System.out.println(">>> Running TEST of method applyReservation4Flight(), class FlightsService.");
         // Given
-        Flight flight = service.getFlightById("FL693D");
+        Flight flight = service.getFlightById("FL693D").get();
         int initialNumbOfFreeSeats = flight.getNumberOfFreeSeats();
 
         // When
@@ -182,7 +182,7 @@ class FlightsServiceTest {
     void cancelReservation4Flight() {
         System.out.println(">>> Running TEST of method cancelReservation4Flight(), class FlightsService.");
         // Given
-        Flight flight = service.getFlightById("FL379W");
+        Flight flight = service.getFlightById("FL379W").get();
         int initialNumbOfFreeSeats = flight.getNumberOfFreeSeats();
 
         // When

@@ -33,7 +33,7 @@ public class FlightsController implements FlightsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Flight getFlightById(String idOfFlight) {
+    public Optional<Flight> getFlightById(String idOfFlight) {
         return flightsService.getFlightById(idOfFlight);
     }
 
