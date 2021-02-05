@@ -18,7 +18,7 @@ public class BookingsController implements BookingsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Booking getBookingByItsId(String idOfBooking) {
+    public Optional<Booking> getBookingByItsId(String idOfBooking) {
         return bookingsService.getBookingByItsId(idOfBooking);
     }
 

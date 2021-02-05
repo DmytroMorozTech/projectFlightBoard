@@ -63,10 +63,10 @@ class BookingsServiceTest {
         String expectedFlight2IDBK2 = "FL129C";
 
         // When
-        Booking actualBooking1 = service.getBookingByItsId("BK318J");
+        Booking actualBooking1 = service.getBookingByItsId("BK318J").get();
         String actualFlight1IDBK1 = actualBooking1.getFlightRoute().getFlight1().getIdOfFlight();
 
-        Booking actualBooking2 = service.getBookingByItsId("BK661G");
+        Booking actualBooking2 = service.getBookingByItsId("BK661G").get();
         String actualFlight2IDBK2 = actualBooking2.getFlightRoute().getFlight2().getIdOfFlight();
 
         // Then
@@ -112,7 +112,7 @@ class BookingsServiceTest {
     void createBooking() {
         System.out.println(">>> Running TEST of method createBooking(), class BookingsService.");
         // Given
-        Booking testBooking = service.getBookingByItsId("BK661G");
+        Booking testBooking = service.getBookingByItsId("BK661G").get();
         FlightRoute testFlightRoute = testBooking.getFlightRoute();
 
         List<Passenger> testPassengerList = new ArrayList<>();

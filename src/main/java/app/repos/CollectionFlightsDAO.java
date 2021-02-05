@@ -9,6 +9,7 @@ import app.exceptions.FlightOverflowException;
 import app.service.fileSystemService.FileSystemService;
 import app.service.loggerService.LoggerService;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -154,11 +155,13 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
         boolean hasConnectingFlight = !b.getFlightRoute().isDirectFlight();
         String idOfF1 = b.getFlightRoute().getFlight1().getIdOfFlight();
         int numbOfPassengers = b.getPassengerList().size();
-        flights.get(idOfF1).cancelReservation4Flight(numbOfPassengers);
+        Optional<Flight> f1 = Optional.ofNullable(flights.get(idOfF1));
+        f1.ifPresent(flight -> flight.cancelReservation4Flight(numbOfPassengers));
 
         if (hasConnectingFlight) {
             String idOfF2 = b.getFlightRoute().getFlight2().getIdOfFlight();
-            flights.get(idOfF2).cancelReservation4Flight(numbOfPassengers);
+            Optional<Flight> f2 = Optional.ofNullable(flights.get(idOfF2));
+            f2.ifPresent(flight -> flight.cancelReservation4Flight(numbOfPassengers));
         }
     }
 
@@ -199,10 +202,9 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
                 flights = (HashMap<String, Flight>) dataFromFS;
             }
             LoggerService.info("Загрузка файла " + nameOfFile + " с жесткого диска.");
-        }
-        catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             throw new FlightOverflowException("Возникла ОШИБКА при чтении файла " + nameOfFile +
-                                                      " с жесткого диска.");
+                    " с жесткого диска.");
         }
     }
 
@@ -214,10 +216,9 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
             fs.saveDataToFile(nameOfFile, flights);
             LoggerService.info("Сохранение данных на жесткий диск в файл " + nameOfFile);
             return true;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new FlightOverflowException("Возникла ОШИБКА при сохранении файла " + nameOfFile +
-                                                      " на жесткий диск компьютера.");
+                    " на жесткий диск компьютера.");
         }
     }
 
@@ -238,11 +239,10 @@ public class CollectionFlightsDAO implements FlightsDAO, CanWorkWithFileSystem {
                 flights = (HashMap<String, Flight>) dataFromFS;
             }
             LoggerService.info("Загрузка файла " + fileName + " с жесткого диска. С целью " +
-                                       "тестирования FlightsService.");
-        }
-        catch (IOException | ClassNotFoundException e) {
+                    "тестирования FlightsService.");
+        } catch (IOException | ClassNotFoundException e) {
             throw new FlightOverflowException("Возникла ОШИБКА при чтении файла " + fileName +
-                                                      " с жесткого диска.");
+                    " с жесткого диска.");
         }
     }
 }

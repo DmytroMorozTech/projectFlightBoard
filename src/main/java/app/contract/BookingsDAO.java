@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface BookingsDAO {
-    Booking getBookingByItsId(String idOfBooking);
+    Optional<Booking> getBookingByItsId(String idOfBooking);
 
     Optional<HashMap<String, Booking>> getAllUserBookings(String userLogin, String name,
                                                           String surname);

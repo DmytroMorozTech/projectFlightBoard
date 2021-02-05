@@ -23,8 +23,8 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
     private final String nameOfFile = "bookings.bin";
 
     @Override
-    public Booking getBookingByItsId(String idOfBooking) {
-        return bookings.get(idOfBooking);
+    public Optional<Booking> getBookingByItsId(String idOfBooking) {
+        return Optional.ofNullable(bookings.get(idOfBooking));
     }
 
     @Override
@@ -48,11 +48,13 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
     public boolean deleteBookingByItsId(String idOfBooking) {
         if (!bookings.containsKey(idOfBooking)) {
             System.out.println("Не удалось найти бронь билетов с указанным ID брони. Ошибка " +
-                                       "удаления брони.");
+                    "удаления брони.");
             return false;
         }
 
         bookings.remove(idOfBooking);
+        LoggerService.info("Бронь под номером " + idOfBooking + " была удалена.");
+        System.out.println("Бронь под номером " + idOfBooking + " была удалена.");
         return !bookings.containsKey(idOfBooking);
     }
 
@@ -109,10 +111,9 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
                 bookings = (HashMap<String, Booking>) dataFromFS;
             }
             LoggerService.info("Загрузка файла " + nameOfFile + " с жесткого диска.");
-        }
-        catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             throw new BookingOverflowException("Возникла ОШИБКА при чтении файла " + nameOfFile +
-                                                       " с жесткого диска.");
+                    " с жесткого диска.");
         }
     }
 
@@ -124,10 +125,9 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
             fs.saveDataToFile(nameOfFile, bookings);
             LoggerService.info("Сохранение данных на жесткий диск в файл " + nameOfFile);
             return true;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new BookingOverflowException("Возникла ОШИБКА при сохранении файла " + nameOfFile +
-                                                       " на жесткий диск компьютера.");
+                    " на жесткий диск компьютера.");
         }
     }
 
@@ -140,11 +140,10 @@ public class CollectionBookingsDAO implements BookingsDAO, CanWorkWithFileSystem
                 bookings = (HashMap<String, Booking>) dataFromFS;
             }
             LoggerService.info("Загрузка файла " + fileName + " с жесткого диска. С целью " +
-                                       "тестирования BookingService.");
-        }
-        catch (IOException | ClassNotFoundException e) {
+                    "тестирования BookingService.");
+        } catch (IOException | ClassNotFoundException e) {
             throw new BookingOverflowException("Возникла ОШИБКА при чтении файла " + fileName +
-                                                       " с жесткого диска.");
+                    " с жесткого диска.");
         }
     }
 

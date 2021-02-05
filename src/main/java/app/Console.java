@@ -155,8 +155,8 @@ public class Console {
         mainMenuCommands.put("4", () -> {
             System.out.println("<<< Вы выбрали команду №4 - ОТМЕНИТЬ БРОНИРОВАНИЕ >>>");
             String idOfBooking = readFlightId("Введите ID Вашего бронирования");
-            Booking bookingToBeDeleted = bookingsController.getBookingByItsId(idOfBooking);
-            flightsController.cancelSeatsReserve4Booking(bookingToBeDeleted);
+            Optional<Booking> bookingToBeDeleted = bookingsController.getBookingByItsId(idOfBooking);
+            bookingToBeDeleted.ifPresent(b -> flightsController.cancelSeatsReserve4Booking(b));
 
             bookingsController.deleteBookingByItsId(idOfBooking);
             return null;

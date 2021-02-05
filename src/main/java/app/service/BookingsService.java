@@ -20,7 +20,7 @@ public class BookingsService implements BookingsDAO, CanWorkWithFileSystem {
     }
 
     @Override
-    public Booking getBookingByItsId(String idOfBooking) {
+    public Optional<Booking> getBookingByItsId(String idOfBooking) {
         LoggerService.info("Получение бронирования по его номеру (ID).");
         return bookingsDAO.getBookingByItsId(idOfBooking);
     }
